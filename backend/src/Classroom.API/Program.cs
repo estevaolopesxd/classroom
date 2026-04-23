@@ -14,13 +14,11 @@ var builder = WebApplication.CreateBuilder(args);
 // ── Services ──────────────────────────────────────────────────────────────────
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-
-// Swagger
 builder.Services.AddSwaggerGen();
 
 // JWT Authentication
 var jwtSecret = builder.Configuration["Jwt:Secret"]
-    ?? throw new InvalidOperationException("JWT Secret not configured");
+    ?? "default-dev-secret-change-in-production-must-be-at-least-32chars!!";
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -30,9 +28,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
             ValidateIssuer = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "classroom-api",
             ValidateAudience = true,
-            ValidAudience = builder.Configuration["Jwt:Audience"],
+            ValidAudience = builder.Configuration["Jwt:Audience"] ?? "classroom-app",
             ValidateLifetime = true,
             ClockSkew = TimeSpan.Zero
         };
@@ -56,21 +54,39 @@ builder.Services.AddAuthorization();
 // Infrastructure (EF Core, MinIO, Stripe, VideoProcessing)
 builder.Services.AddInfrastructure(builder.Configuration);
 
-// SignalR + Redis backplane
+// SignalR + optional Redis backplane
 var redisConnection = builder.Configuration["Redis:ConnectionString"];
 var signalR = builder.Services.AddSignalR();
-if (!string.IsNullOrEmpty(redisConnection))
-    signalR.AddStackExchangeRedis(redisConnection);
+if (!string.IsNullOrWhiteSpace(redisConnection))
+{
+    try { signalR.AddStackExchangeRedis(redisConnection); }
+    catch { /* Redis optional */ }
+}
 
-// CORS
-var corsOrigins = builder.Configuration["Cors:Origins"]?.Split(',') ?? ["http://localhost:3000"];
+// CORS – accept all origins in development, restrict via env in production
+var corsOrigins = builder.Configuration["Cors:Origins"]?.Split(',', StringSplitOptions.RemoveEmptyEntries)
+    ?? [];
+
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
-        policy.WithOrigins(corsOrigins)
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials());
+    {
+        if (corsOrigins.Length > 0 && !corsOrigins.Contains("*"))
+        {
+            policy.WithOrigins(corsOrigins)
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        }
+        else
+        {
+            // Dev mode: allow any origin with credentials
+            policy.SetIsOriginAllowed(_ => true)
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        }
+    });
 });
 
 // Rate limiting
@@ -81,7 +97,7 @@ builder.Services.AddRateLimiter(options =>
             context.Connection.RemoteIpAddress?.ToString() ?? "anon",
             _ => new System.Threading.RateLimiting.FixedWindowRateLimiterOptions
             {
-                PermitLimit = 10,
+                PermitLimit = 20,
                 Window = TimeSpan.FromMinutes(1)
             }));
 });
@@ -103,39 +119,50 @@ app.UseRateLimiter();
 app.MapControllers();
 app.MapHub<LiveStreamHub>("/hubs/livestream");
 
+// Health check endpoint
+app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }));
+
 // ── Database migration + seed ─────────────────────────────────────────────────
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
 
-    await db.Database.MigrateAsync();
-    logger.LogInformation("Database migrated successfully");
-
-    // Seed default admin if no users exist
-    if (!await db.Users.AnyAsync())
+    try
     {
-        var adminEmail = builder.Configuration["Admin:DefaultEmail"] ?? "admin@classroom.com";
-        var adminPassword = builder.Configuration["Admin:DefaultPassword"] ?? "Admin@123456";
+        await db.Database.MigrateAsync();
+        logger.LogInformation("✓ Database migrated");
 
-        db.Users.Add(new User
+        // Seed default admin if no users exist
+        if (!await db.Users.AnyAsync())
         {
-            Email = adminEmail.ToLower(),
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword(adminPassword),
-            FirstName = "Admin",
-            LastName = "Principal",
-            Role = UserRole.Admin
-        });
+            var adminEmail = builder.Configuration["Admin:DefaultEmail"] ?? "admin@classroom.com";
+            var adminPassword = builder.Configuration["Admin:DefaultPassword"] ?? "Admin@123456";
 
-        // Default theme
-        db.ThemeConfigs.Add(new ThemeConfig
-        {
-            Name = "default",
-            IsActive = true
-        });
+            db.Users.Add(new User
+            {
+                Email = adminEmail.ToLower(),
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(adminPassword),
+                FirstName = "Admin",
+                LastName = "Principal",
+                Role = UserRole.Admin,
+                IsActive = true
+            });
 
-        await db.SaveChangesAsync();
-        logger.LogInformation("Default admin user seeded: {Email}", adminEmail);
+            db.ThemeConfigs.Add(new ThemeConfig
+            {
+                Name = "default",
+                IsActive = true
+            });
+
+            await db.SaveChangesAsync();
+            logger.LogInformation("✓ Admin seed: {Email} / {Password}", adminEmail, adminPassword);
+        }
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Database migration failed");
+        throw;
     }
 }
 

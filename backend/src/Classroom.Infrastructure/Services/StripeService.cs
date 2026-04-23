@@ -6,10 +6,20 @@ namespace Classroom.Infrastructure.Services;
 
 public class StripeService(IConfiguration configuration)
 {
-    private readonly string _secretKey = configuration["Stripe:SecretKey"]!;
-    private readonly string _webhookSecret = configuration["Stripe:WebhookSecret"]!;
+    private readonly string? _secretKey = configuration["Stripe:SecretKey"];
+    private readonly string? _webhookSecret = configuration["Stripe:WebhookSecret"];
 
-    private StripeClient CreateClient() => new(_secretKey);
+    public bool IsConfigured =>
+        !string.IsNullOrWhiteSpace(_secretKey) &&
+        !_secretKey.StartsWith("sk_test_disabled") &&
+        _secretKey.StartsWith("sk_");
+
+    private StripeClient CreateClient()
+    {
+        if (!IsConfigured)
+            throw new InvalidOperationException("Stripe não configurado. Adicione STRIPE_SECRET_KEY no .env");
+        return new StripeClient(_secretKey);
+    }
 
     public async Task<Product> CreateProductAsync(string name, string description)
     {
@@ -61,6 +71,8 @@ public class StripeService(IConfiguration configuration)
 
     public Event ConstructWebhookEvent(string json, string signature)
     {
+        if (string.IsNullOrWhiteSpace(_webhookSecret) || _webhookSecret.StartsWith("whsec_disabled"))
+            throw new InvalidOperationException("Stripe webhook não configurado");
         return EventUtility.ConstructEvent(json, signature, _webhookSecret);
     }
 }

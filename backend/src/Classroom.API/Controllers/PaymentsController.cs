@@ -22,6 +22,9 @@ public class PaymentsController(AppDbContext db, StripeService stripe, IConfigur
         var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         var userEmail = User.FindFirstValue(ClaimTypes.Email)!;
 
+        if (!stripe.IsConfigured)
+            return BadRequest(new { message = "Pagamentos não configurados. Configure as chaves Stripe no servidor." });
+
         var course = await db.Courses.FindAsync(request.CourseId);
         if (course is null) return NotFound();
         if (!course.IsForSale || string.IsNullOrEmpty(course.StripePriceId))

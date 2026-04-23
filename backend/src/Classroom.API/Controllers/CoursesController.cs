@@ -165,7 +165,7 @@ public class CoursesController(AppDbContext db, StripeService stripe) : Controll
         course.Price = request.Price;
         course.Currency = request.Currency;
 
-        if (request.IsForSale && request.Price.HasValue)
+        if (request.IsForSale && request.Price.HasValue && stripe.IsConfigured)
         {
             // Create or update Stripe product/price
             if (string.IsNullOrEmpty(course.StripeProductId))
