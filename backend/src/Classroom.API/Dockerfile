@@ -14,7 +14,7 @@ RUN dotnet restore src/Classroom.API/Classroom.API.csproj
 COPY . .
 
 # Publish release build
-RUN dotnet publish src/Classroom.API/Classroom.API.csproj -c Release -o /app/publish --no-restore
+RUN dotnet publish src/Classroom.API/Classroom.API.csproj -c Release -o /app/publish
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
