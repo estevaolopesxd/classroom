@@ -140,7 +140,7 @@ services:
       NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-pk_test_disabled}
       NEXT_PUBLIC_HLS_BASE_URL: ${NEXT_PUBLIC_HLS_BASE_URL:-http://localhost:8090/hls}
     ports:
-      - "3000:3000"
+      - "3002:3000"
     depends_on:
       api:
         condition: service_healthy
