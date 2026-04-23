@@ -105,12 +105,13 @@ builder.Services.AddRateLimiter(options =>
 // ── App ────────────────────────────────────────────────────────────────────────
 var app = builder.Build();
 
+// CORS must be first — before ExceptionMiddleware — so headers are set even on error responses
+app.UseCors();
+
 app.UseMiddleware<ExceptionMiddleware>();
 
 app.UseSwagger();
 app.UseSwaggerUI();
-
-app.UseCors();
 app.UseWebSockets();
 app.UseAuthentication();
 app.UseAuthorization();

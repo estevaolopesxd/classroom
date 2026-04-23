@@ -118,10 +118,10 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-sf", "http://localhost:8080/health"]
-      interval: 15s
-      timeout: 10s
-      retries: 15
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
       start_period: 60s
 
   frontend:
@@ -136,7 +136,7 @@ services:
       NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-pk_test_disabled}
       NEXT_PUBLIC_HLS_BASE_URL: http://${SERVER_IP:-localhost}:8090/hls
     ports:
-      - "3000:3000"
+      - "3002:3000"
     depends_on:
       api:
         condition: service_healthy
