@@ -1,0 +1,11 @@
+C:\Desenvolvimento\Classroom\backend\src\Classroom.Domain\bin\Debug\net10.0\Classroom.Domain.deps.json
+C:\Desenvolvimento\Classroom\backend\src\Classroom.Domain\bin\Debug\net10.0\Classroom.Domain.dll
+C:\Desenvolvimento\Classroom\backend\src\Classroom.Domain\bin\Debug\net10.0\Classroom.Domain.pdb
+C:\Desenvolvimento\Classroom\backend\src\Classroom.Domain\obj\Debug\net10.0\Classroom.Domain.GeneratedMSBuildEditorConfig.editorconfig
+C:\Desenvolvimento\Classroom\backend\src\Classroom.Domain\obj\Debug\net10.0\Classroom.Domain.AssemblyInfoInputs.cache
+C:\Desenvolvimento\Classroom\backend\src\Classroom.Domain\obj\Debug\net10.0\Classroom.Domain.AssemblyInfo.cs
+C:\Desenvolvimento\Classroom\backend\src\Classroom.Domain\obj\Debug\net10.0\Classroom.Domain.csproj.CoreCompileInputs.cache
+C:\Desenvolvimento\Classroom\backend\src\Classroom.Domain\obj\Debug\net10.0\Classroom.Domain.dll
+C:\Desenvolvimento\Classroom\backend\src\Classroom.Domain\obj\Debug\net10.0\refint\Classroom.Domain.dll
+C:\Desenvolvimento\Classroom\backend\src\Classroom.Domain\obj\Debug\net10.0\Classroom.Domain.pdb
+C:\Desenvolvimento\Classroom\backend\src\Classroom.Domain\obj\Debug\net10.0\ref\Classroom.Domain.dll

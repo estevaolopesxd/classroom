@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p backend/src backend/tests)",
+      "Bash(dotnet new:*)",
+      "Bash(dotnet sln:*)",
+      "Bash(dotnet add:*)",
+      "Bash(xargs sed:*)",
+      "Bash(dotnet build:*)",
+      "Bash(dotnet tool:*)",
+      "Bash(dotnet ef:*)",
+      "Bash(npx create-next-app@latest /c/Desenvolvimento/Classroom/frontend --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --no-turbopack)",
+      "Bash(npm install:*)",
+      "Bash(npx shadcn@latest init --yes --base-color violet)",
+      "Bash(npx shadcn@latest init --yes)",
+      "Bash(npx shadcn@latest init -d)",
+      "Bash(npx shadcn@latest add card input label dialog form select badge progress table toast tabs separator avatar dropdown-menu sheet sidebar --yes)",
+      "Bash(npx shadcn@latest add card input label dialog form select badge progress table tabs separator avatar dropdown-menu sheet sonner accordion checkbox textarea --yes)",
+      "Bash(npx shadcn@latest add scroll-area --yes)",
+      "Bash(npm run:*)"
+    ]
+  }
+}

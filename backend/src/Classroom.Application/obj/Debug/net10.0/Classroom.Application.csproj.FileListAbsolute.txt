@@ -1,0 +1,15 @@
+C:\Desenvolvimento\Classroom\backend\src\Classroom.Application\bin\Debug\net10.0\Classroom.Application.deps.json
+C:\Desenvolvimento\Classroom\backend\src\Classroom.Application\bin\Debug\net10.0\Classroom.Application.dll
+C:\Desenvolvimento\Classroom\backend\src\Classroom.Application\bin\Debug\net10.0\Classroom.Application.pdb
+C:\Desenvolvimento\Classroom\backend\src\Classroom.Application\bin\Debug\net10.0\Classroom.Domain.dll
+C:\Desenvolvimento\Classroom\backend\src\Classroom.Application\bin\Debug\net10.0\Classroom.Domain.pdb
+C:\Desenvolvimento\Classroom\backend\src\Classroom.Application\obj\Debug\net10.0\Classroom.Application.csproj.AssemblyReference.cache
+C:\Desenvolvimento\Classroom\backend\src\Classroom.Application\obj\Debug\net10.0\Classroom.Application.GeneratedMSBuildEditorConfig.editorconfig
+C:\Desenvolvimento\Classroom\backend\src\Classroom.Application\obj\Debug\net10.0\Classroom.Application.AssemblyInfoInputs.cache
+C:\Desenvolvimento\Classroom\backend\src\Classroom.Application\obj\Debug\net10.0\Classroom.Application.AssemblyInfo.cs
+C:\Desenvolvimento\Classroom\backend\src\Classroom.Application\obj\Debug\net10.0\Classroom.Application.csproj.CoreCompileInputs.cache
+C:\Desenvolvimento\Classroom\backend\src\Classroom.Application\obj\Debug\net10.0\Classroo.946CA86C.Up2Date
+C:\Desenvolvimento\Classroom\backend\src\Classroom.Application\obj\Debug\net10.0\Classroom.Application.dll
+C:\Desenvolvimento\Classroom\backend\src\Classroom.Application\obj\Debug\net10.0\refint\Classroom.Application.dll
+C:\Desenvolvimento\Classroom\backend\src\Classroom.Application\obj\Debug\net10.0\Classroom.Application.pdb
+C:\Desenvolvimento\Classroom\backend\src\Classroom.Application\obj\Debug\net10.0\ref\Classroom.Application.dll

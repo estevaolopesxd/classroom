@@ -1,0 +1,30 @@
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /app
+
+# Copy solution and project files
+COPY *.sln ./
+COPY src/Classroom.Domain/*.csproj src/Classroom.Domain/
+COPY src/Classroom.Application/*.csproj src/Classroom.Application/
+COPY src/Classroom.Infrastructure/*.csproj src/Classroom.Infrastructure/
+COPY src/Classroom.API/*.csproj src/Classroom.API/
+
+# Restore
+RUN dotnet restore src/Classroom.API/Classroom.API.csproj
+
+# Copy all source
+COPY . .
+
+# Publish
+RUN dotnet publish src/Classroom.API/Classroom.API.csproj -c Release -o /app/publish
+
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
+WORKDIR /app
+
+# Install FFmpeg for video processing
+RUN apt-get update && apt-get install -y ffmpeg && rm -rf /var/lib/apt/lists/*
+
+COPY --from=build /app/publish .
+
+EXPOSE 8080
+
+ENTRYPOINT ["dotnet", "Classroom.API.dll"]
