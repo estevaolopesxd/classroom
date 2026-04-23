@@ -63,29 +63,15 @@ if (!string.IsNullOrWhiteSpace(redisConnection))
     catch { /* Redis optional */ }
 }
 
-// CORS – accept all origins in development, restrict via env in production
-var corsOrigins = builder.Configuration["Cors:Origins"]?.Split(',', StringSplitOptions.RemoveEmptyEntries)
-    ?? [];
-
+// CORS – named policy, explicit — must be first in the pipeline
 builder.Services.AddCors(options =>
 {
-    options.AddDefaultPolicy(policy =>
+    options.AddPolicy("AllowAll", policy =>
     {
-        if (corsOrigins.Length > 0 && !corsOrigins.Contains("*"))
-        {
-            policy.WithOrigins(corsOrigins)
-                  .AllowAnyHeader()
-                  .AllowAnyMethod()
-                  .AllowCredentials();
-        }
-        else
-        {
-            // Dev mode: allow any origin with credentials
-            policy.SetIsOriginAllowed(_ => true)
-                  .AllowAnyHeader()
-                  .AllowAnyMethod()
-                  .AllowCredentials();
-        }
+        policy.SetIsOriginAllowed(_ => true)
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
     });
 });
 
@@ -105,8 +91,8 @@ builder.Services.AddRateLimiter(options =>
 // ── App ────────────────────────────────────────────────────────────────────────
 var app = builder.Build();
 
-// CORS must be first — before ExceptionMiddleware — so headers are set even on error responses
-app.UseCors();
+// CORS first — named policy — headers survive even on error responses
+app.UseCors("AllowAll");
 
 app.UseMiddleware<ExceptionMiddleware>();
 
