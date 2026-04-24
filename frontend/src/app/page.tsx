@@ -180,6 +180,21 @@ export default async function LandingPage() {
         .nav-link:hover { color: var(--ink); }
         .nav-link:hover::after { width:100%; }
 
+        /* Nav entrar */
+        .nav-entrar {
+          color: var(--muted); font-size: 14px; font-weight: 500;
+          text-decoration: none; padding: 8px 14px; border-radius: 8px;
+          transition: color .2s;
+        }
+        .nav-entrar:hover { color: var(--ink); }
+
+        /* Footer links */
+        .footer-link {
+          font-size: 13px; color: rgba(254,248,245,.38);
+          text-decoration: none; transition: color .2s;
+        }
+        .footer-link:hover { color: rgba(254,248,245,.7); }
+
         /* Stats row separator */
         .stat-sep { border-right: 1px solid var(--line); }
 
@@ -238,10 +253,7 @@ export default async function LandingPage() {
 
             {/* Right CTAs */}
             <div style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0 }}>
-              <Link href="/login" style={{ color: "var(--muted)", fontSize: 14, fontWeight: 500, textDecoration: "none", padding: "8px 14px", borderRadius: 8, transition: "color .2s" }}
-                onMouseEnter={e => (e.currentTarget.style.color = "var(--ink)")}
-                onMouseLeave={e => (e.currentTarget.style.color = "var(--muted)")}
-              >Entrar</Link>
+              <Link href="/login" className="nav-entrar">Entrar</Link>
               <Link href="/login" className="btn-rose" style={{ padding: "10px 22px", fontSize: 14 }}>
                 Começar grátis
               </Link>
@@ -803,10 +815,7 @@ export default async function LandingPage() {
 
               <div style={{ display: "flex", gap: 24 }}>
                 {[["Cursos", "/courses"], ["Entrar", "/login"]].map(([l, h]) => (
-                  <Link key={h} href={h} style={{ fontSize: 13, color: "rgba(254,248,245,.38)", textDecoration: "none", transition: "color .2s" }}
-                    onMouseEnter={e => (e.currentTarget.style.color = "rgba(254,248,245,.7)")}
-                    onMouseLeave={e => (e.currentTarget.style.color = "rgba(254,248,245,.38)")}
-                  >{l}</Link>
+                  <Link key={h} href={h} className="footer-link">{l}</Link>
                 ))}
               </div>
             </div>
