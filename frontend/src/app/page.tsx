@@ -12,15 +12,10 @@ async function getPublishedCourses() {
   } catch { return []; }
 }
 
-const MOCK_COURSES = [
-  { id: "1", title: "Unhas de Gel — Do Zero ao Avançado", level: "Iniciante", totalModules: 8, totalLessons: 42, isForSale: true, price: 297, currency: "BRL", shortDescription: "Aprenda todas as técnicas de gel desde os fundamentos até aplicações avançadas." },
-  { id: "2", title: "Nail Art Criativa — Técnicas Exclusivas", level: "Intermediário", totalModules: 6, totalLessons: 28, isForSale: true, price: 197, currency: "BRL", shortDescription: "Designs únicos, flores 3D, degradê e muito mais para se destacar no mercado." },
-  { id: "3", title: "Baby Boomer Perfeito — Passo a Passo", level: "Avançado", totalModules: 4, totalLessons: 18, isForSale: true, price: 147, currency: "BRL", shortDescription: "O técnica queridinha das clientes dominada em profundidade." },
-];
 
 export default async function LandingPage() {
   const rawCourses = await getPublishedCourses();
-  const courses = Array.isArray(rawCourses) && rawCourses.length > 0 ? rawCourses : MOCK_COURSES;
+  const courses = Array.isArray(rawCourses) ? rawCourses : [];
 
   return (
     <>
@@ -60,11 +55,7 @@ export default async function LandingPage() {
           0%,100% { transform: translateY(0); }
           50%      { transform: translateY(-8px); }
         }
-        @keyframes ticker {
-          0%   { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
-        }
-        @keyframes shimmer {
+@keyframes shimmer {
           0%   { background-position: -300% center; }
           100% { background-position:  300% center; }
         }
@@ -448,22 +439,6 @@ export default async function LandingPage() {
           </div>
         </section>
 
-        {/* ═══════════════════════════════ TICKER ══════════════════════════════ */}
-        <div style={{ background: "var(--rose)", overflow: "hidden", padding: "13px 0", borderTop: "1px solid #B82E66", borderBottom: "1px solid #B82E66" }}>
-          <div style={{ display: "flex", animation: "ticker 28s linear infinite", width: "max-content", willChange: "transform" }}>
-            {[0, 1].map(s => (
-              <div key={s} style={{ display: "flex" }}>
-                {["Nail Art","Gel UV","Fibra de Vidro","Esmaltação em Gel","Unhas Acrílicas","Alongamento","Baby Boomer","French Clássica","Nail Design","Decoração 3D","Degradê Perfeito","Técnicas Pro"].map(t => (
-                  <span key={t} style={{ display: "inline-flex", alignItems: "center", gap: 20, padding: "0 24px", whiteSpace: "nowrap", fontSize: 12, fontWeight: 700, letterSpacing: ".06em", textTransform: "uppercase", color: "rgba(255,255,255,.9)" }}>
-                    {t}
-                    <span style={{ opacity: .4, fontSize: 10 }}>✦</span>
-                  </span>
-                ))}
-              </div>
-            ))}
-          </div>
-        </div>
-
         {/* ═══════════════════════════════ FEATURES ════════════════════════════ */}
         <section id="sobre" style={{ background: "var(--white)", padding: "108px 24px" }}>
           <div style={{ maxWidth: 1180, margin: "0 auto" }}>
@@ -631,66 +606,77 @@ export default async function LandingPage() {
             </div>
 
             {/* Grid */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(310px, 1fr))", gap: 24 }}>
-              {courses.slice(0, 6).map((course: {
-                id: string; title: string; thumbnailUrl?: string; level?: string;
-                shortDescription?: string; totalLessons: number; totalModules: number;
-                isForSale: boolean; price?: number; currency: string;
-              }, i: number) => {
-                const gradients = [
-                  "linear-gradient(140deg, #D4437C 0%, #8B1A42 100%)",
-                  "linear-gradient(140deg, #8B1A42 0%, #C9A87C 100%)",
-                  "linear-gradient(140deg, #C9A87C 0%, #D4437C 100%)",
-                  "linear-gradient(140deg, #4A1A2E 0%, #D4437C 100%)",
-                  "linear-gradient(140deg, #D4437C 0%, #4A1A2E 100%)",
-                  "linear-gradient(140deg, #1A0A12 0%, #D4437C 100%)",
-                ];
-                return (
-                  <Link key={course.id} href={`/courses/${course.id}`} style={{ textDecoration: "none", color: "inherit" }}>
-                    <div className="course-card">
-                      {/* Thumbnail */}
-                      <div style={{ aspectRatio: "16/9", overflow: "hidden", background: gradients[i % gradients.length], position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        {course.thumbnailUrl ? (
-                          <img src={course.thumbnailUrl} alt={course.title} className="course-card-thumb" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                        ) : (
-                          <svg className="course-card-thumb" width="52" height="52" viewBox="0 0 24 24" fill="none">
-                            <path d="M6 3L2 9l10 12L22 9l-4-6H6z" fill="rgba(255,255,255,.2)" stroke="white" strokeWidth="1.6" strokeLinejoin="round"/>
-                            <path d="M2 9h20M6 3l3 6M18 3l-3 6M12 21L9 9M12 21l3-12" stroke="rgba(255,255,255,.5)" strokeWidth="1.2" strokeLinecap="round"/>
-                          </svg>
-                        )}
-                        {course.level && (
-                          <div style={{ position: "absolute", top: 12, left: 12, background: "rgba(0,0,0,.4)", backdropFilter: "blur(8px)", color: "white", fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 100, letterSpacing: ".04em", border: "1px solid rgba(255,255,255,.1)" }}>
-                            {course.level}
-                          </div>
-                        )}
-                        {/* Play overlay on hover */}
-                        <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0)", transition: "background .3s", display: "flex", alignItems: "center", justifyContent: "center" }} className="card-play-overlay">
-                          <div style={{ width: 44, height: 44, borderRadius: "50%", background: "rgba(255,255,255,.9)", display: "flex", alignItems: "center", justifyContent: "center", opacity: 0, transform: "scale(0.8)", transition: "opacity .25s, transform .25s" }} className="play-btn">
-                            <Play size={18} color="var(--rose)" fill="var(--rose)" />
-                          </div>
+            {courses.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "72px 24px", borderRadius: 24, border: "1px dashed var(--line)", background: "var(--cream)" }}>
+                <div style={{
+                  width: 64, height: 64, borderRadius: "50%",
+                  background: "var(--rose-light)", margin: "0 auto 20px",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  <BookOpen size={28} color="var(--rose)" />
+                </div>
+                <h3 style={{ fontFamily: "var(--serif)", fontSize: 24, fontWeight: 700, color: "var(--ink)", marginBottom: 10 }}>
+                  Cursos em breve
+                </h3>
+                <p style={{ color: "var(--muted)", fontSize: 15, lineHeight: 1.7, maxWidth: 360, margin: "0 auto" }}>
+                  Estamos preparando conteúdo incrível. Crie sua conta e seja a primeira a saber quando os cursos estiverem disponíveis.
+                </p>
+              </div>
+            ) : (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(310px, 1fr))", gap: 24 }}>
+                {courses.slice(0, 6).map((course: {
+                  id: string; title: string; thumbnailUrl?: string; level?: string;
+                  shortDescription?: string; totalLessons?: number; totalModules?: number;
+                }, i: number) => {
+                  const gradients = [
+                    "linear-gradient(140deg, #D4437C 0%, #8B1A42 100%)",
+                    "linear-gradient(140deg, #8B1A42 0%, #C9A87C 100%)",
+                    "linear-gradient(140deg, #C9A87C 0%, #D4437C 100%)",
+                    "linear-gradient(140deg, #4A1A2E 0%, #D4437C 100%)",
+                    "linear-gradient(140deg, #D4437C 0%, #4A1A2E 100%)",
+                    "linear-gradient(140deg, #1A0A12 0%, #D4437C 100%)",
+                  ];
+                  return (
+                    <Link key={course.id} href={`/courses/${course.id}`} style={{ textDecoration: "none", color: "inherit" }}>
+                      <div className="course-card">
+                        {/* Thumbnail */}
+                        <div style={{ aspectRatio: "16/9", overflow: "hidden", background: gradients[i % gradients.length], position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          {course.thumbnailUrl ? (
+                            <img src={course.thumbnailUrl} alt={course.title} className="course-card-thumb" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          ) : (
+                            <svg className="course-card-thumb" width="52" height="52" viewBox="0 0 24 24" fill="none">
+                              <path d="M6 3L2 9l10 12L22 9l-4-6H6z" fill="rgba(255,255,255,.2)" stroke="white" strokeWidth="1.6" strokeLinejoin="round"/>
+                              <path d="M2 9h20M6 3l3 6M18 3l-3 6M12 21L9 9M12 21l3-12" stroke="rgba(255,255,255,.5)" strokeWidth="1.2" strokeLinecap="round"/>
+                            </svg>
+                          )}
+                          {course.level && (
+                            <div style={{ position: "absolute", top: 12, left: 12, background: "rgba(0,0,0,.4)", backdropFilter: "blur(8px)", color: "white", fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 100, letterSpacing: ".04em", border: "1px solid rgba(255,255,255,.1)" }}>
+                              {course.level}
+                            </div>
+                          )}
+                        </div>
+                        {/* Content */}
+                        <div style={{ padding: "22px 22px 20px", flex: 1, display: "flex", flexDirection: "column" }}>
+                          <h3 style={{ fontFamily: "var(--serif)", fontSize: 17, fontWeight: 700, color: "var(--ink)", lineHeight: 1.38, marginBottom: 10, letterSpacing: "-.025em" }}>{course.title}</h3>
+                          {course.shortDescription && (
+                            <p style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.65, flex: 1 }}>{course.shortDescription}</p>
+                          )}
+                          {(course.totalModules || course.totalLessons) && (
+                            <div style={{ paddingTop: 14, borderTop: "1px solid var(--line)", marginTop: "auto" }}>
+                              <span style={{ fontSize: 12, color: "var(--muted)" }}>
+                                {course.totalModules ? `${course.totalModules} módulos` : ""}
+                                {course.totalModules && course.totalLessons ? " · " : ""}
+                                {course.totalLessons ? `${course.totalLessons} aulas` : ""}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       </div>
-
-                      {/* Content */}
-                      <div style={{ padding: "22px 22px 20px", flex: 1, display: "flex", flexDirection: "column" }}>
-                        <h3 style={{ fontFamily: "var(--serif)", fontSize: 17, fontWeight: 700, color: "var(--ink)", lineHeight: 1.38, marginBottom: 10, letterSpacing: "-.025em" }}>{course.title}</h3>
-                        {course.shortDescription && (
-                          <p style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.65, marginBottom: 16, flex: 1 }}>{course.shortDescription}</p>
-                        )}
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: 14, borderTop: "1px solid var(--line)", marginTop: "auto" }}>
-                          <span style={{ fontSize: 12, color: "var(--muted)" }}>{course.totalModules} módulos · {course.totalLessons} aulas</span>
-                          <span style={{ fontFamily: "var(--serif)", fontSize: 18, fontWeight: 700, color: "var(--rose)" }}>
-                            {course.isForSale && course.price
-                              ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: course.currency || "BRL" }).format(course.price)
-                              : "Gratuito"}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </section>
 
