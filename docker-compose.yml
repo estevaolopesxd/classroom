@@ -32,6 +32,8 @@ services:
     environment:
       MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-Minio@2024}
+      # CORS nativo do MinIO — aceita qualquer origem para upload direto do browser
+      MINIO_API_CORS_ALLOW_ORIGIN: "*"
     volumes:
       - minio_data:/data
     ports:
@@ -61,12 +63,7 @@ services:
         mc anonymous set download local/thumbnails &&
         mc anonymous set download local/avatars &&
         mc anonymous set download local/logos &&
-        printf '<?xml version="1.0" encoding="UTF-8"?><CORSConfiguration><CORSRule><AllowedOrigin>*</AllowedOrigin><AllowedMethod>GET</AllowedMethod><AllowedMethod>PUT</AllowedMethod><AllowedMethod>POST</AllowedMethod><AllowedMethod>DELETE</AllowedMethod><AllowedMethod>HEAD</AllowedMethod><AllowedHeader>*</AllowedHeader><ExposeHeader>ETag</ExposeHeader><MaxAgeSeconds>3600</MaxAgeSeconds></CORSRule></CORSConfiguration>' > /tmp/cors.xml &&
-        mc cors set local/videos /tmp/cors.xml &&
-        mc cors set local/thumbnails /tmp/cors.xml &&
-        mc cors set local/avatars /tmp/cors.xml &&
-        mc cors set local/logos /tmp/cors.xml &&
-        echo 'MinIO CORS OK'
+        echo 'MinIO buckets OK'
       "
     restart: on-failure
 
