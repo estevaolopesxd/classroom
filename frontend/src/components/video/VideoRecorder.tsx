@@ -124,6 +124,7 @@ export function VideoRecorder({ onVideoReady }: VideoRecorderProps) {
   const startRecording = async () => {
     try {
       let recordStream: MediaStream;
+      let displayStream: MediaStream | undefined;
 
       if (mode === "camera") {
         // Camera only
@@ -137,7 +138,7 @@ export function VideoRecorder({ onVideoReady }: VideoRecorderProps) {
 
       } else if (mode === "screen") {
         // Screen only + mic
-        const displayStream = await navigator.mediaDevices.getDisplayMedia({
+        displayStream = await navigator.mediaDevices.getDisplayMedia({
           video: { frameRate: 30 },
           audio: true,
         });
@@ -158,7 +159,7 @@ export function VideoRecorder({ onVideoReady }: VideoRecorderProps) {
 
       } else {
         // PiP: Screen + Camera composite via canvas
-        const displayStream = await navigator.mediaDevices.getDisplayMedia({
+        displayStream = await navigator.mediaDevices.getDisplayMedia({
           video: { frameRate: 30 },
           audio: false,
         });
