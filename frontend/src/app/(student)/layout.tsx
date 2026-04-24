@@ -7,8 +7,15 @@ import { authApi } from "@/lib/api/auth";
 import { useEffect, useState } from "react";
 import {
   BookOpen, LayoutDashboard, GraduationCap,
-  LogOut, Settings, ChevronDown, Gem
+  LogOut, Settings, ChevronDown
 } from "lucide-react";
+
+const LogoIcon = ({ size = 16 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <path d="M6 3L2 9l10 12L22 9l-4-6H6z" stroke="white" strokeWidth="1.8" strokeLinejoin="round" fill="rgba(255,255,255,0.18)"/>
+    <path d="M2 9h20M6 3l3 6M18 3l-3 6M12 21L9 9M12 21l3-12" stroke="rgba(255,255,255,.65)" strokeWidth="1.3" strokeLinecap="round"/>
+  </svg>
+);
 import { toast } from "sonner";
 
 export default function StudentLayout({ children }: { children: React.ReactNode }) {
@@ -79,7 +86,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
               justifyContent: "center",
               boxShadow: "0 3px 12px rgba(212,67,124,0.35)",
             }}>
-              <Gem size={16} color="white" />
+              <LogoIcon size={16} />
             </div>
             <span style={{ fontWeight: 900, fontSize: 18, letterSpacing: "-0.04em", color: "#0F0A0D" }}>
               Nail<span style={{ color: "#D4437C" }}>✦</span>Class

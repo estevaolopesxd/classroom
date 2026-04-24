@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useAuthStore } from "@/lib/stores/authStore";
 import { authApi } from "@/lib/api/auth";
-import { Gem, Loader2, Eye, EyeOff, CheckCircle, ArrowLeft, Star } from "lucide-react";
+import { Loader2, Eye, EyeOff, CheckCircle, ArrowLeft, Star } from "lucide-react";
 import Link from "next/link";
 
 export default function LoginPage() {
@@ -93,37 +93,43 @@ export default function LoginPage() {
           {/* Logo */}
           <Link href="/" style={{ display: "inline-flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
             <div style={{
-              width: 40,
-              height: 40,
-              borderRadius: 12,
-              background: "linear-gradient(135deg, #D4437C, #8B1A42)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              boxShadow: "0 4px 16px rgba(212,67,124,0.4)",
+              width: 40, height: 40, borderRadius: 12, flexShrink: 0,
+              background: "linear-gradient(140deg, #E05890 0%, #D4437C 50%, #8B1A42 100%)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              boxShadow: "0 4px 16px rgba(212,67,124,0.4), inset 0 1px 0 rgba(255,255,255,.18)",
             }}>
-              <Gem size={18} color="white" />
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+                <path d="M6 3L2 9l10 12L22 9l-4-6H6z" stroke="white" strokeWidth="1.8" strokeLinejoin="round" fill="rgba(255,255,255,0.15)"/>
+                <path d="M2 9h20M6 3l3 6M18 3l-3 6M12 21L9 9M12 21l3-12" stroke="rgba(255,255,255,.65)" strokeWidth="1.3" strokeLinecap="round"/>
+              </svg>
             </div>
-            <span style={{ fontWeight: 900, fontSize: 20, letterSpacing: "-0.04em", color: "#FEFAF8" }}>
-              Nail<span style={{ color: "#D4437C" }}>✦</span>Class
+            <span style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 700, fontSize: 20, letterSpacing: "-0.03em", color: "#FEFAF8" }}>
+              Nail<span style={{ color: "#D4437C" }}>Class</span>
             </span>
           </Link>
         </div>
 
         <div style={{ position: "relative", zIndex: 1 }}>
-          {/* Emoji */}
-          <div style={{ fontSize: 64, marginBottom: 28, lineHeight: 1 }}>💅</div>
+          {/* Diamond accent */}
+          <div style={{ marginBottom: 28 }}>
+            <svg width="44" height="44" viewBox="0 0 24 24" fill="none">
+              <path d="M6 3L2 9l10 12L22 9l-4-6H6z" fill="rgba(212,67,124,0.18)" stroke="#D4437C" strokeWidth="1.6" strokeLinejoin="round"/>
+              <path d="M2 9h20M6 3l3 6M18 3l-3 6M12 21L9 9M12 21l3-12" stroke="rgba(212,67,124,.6)" strokeWidth="1.3" strokeLinecap="round"/>
+            </svg>
+          </div>
 
           {/* Headline */}
           <h2 style={{
-            fontSize: "clamp(28px, 3vw, 40px)",
-            fontWeight: 900,
-            letterSpacing: "-0.05em",
+            fontFamily: "'Playfair Display', Georgia, serif",
+            fontSize: "clamp(28px, 3vw, 42px)",
+            fontWeight: 700,
+            letterSpacing: "-0.04em",
             color: "#FEFAF8",
-            lineHeight: 1.08,
+            lineHeight: 1.06,
             marginBottom: 16,
           }}>
-            Bem-vinda<br />de volta.
+            Bem-vinda<br />
+            <em style={{ fontStyle: "italic", color: "#E05890" }}>de volta.</em>
           </h2>
           <p style={{
             fontSize: 15,
@@ -249,19 +255,18 @@ export default function LoginPage() {
           }}>
             <Link href="/" style={{ display: "inline-flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
               <div style={{
-                width: 44,
-                height: 44,
-                borderRadius: 13,
-                background: "linear-gradient(135deg, #D4437C, #8B1A42)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                boxShadow: "0 4px 16px rgba(212,67,124,0.35)",
+                width: 40, height: 40, borderRadius: 11, flexShrink: 0,
+                background: "linear-gradient(140deg, #E05890 0%, #D4437C 50%, #8B1A42 100%)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                boxShadow: "0 4px 16px rgba(212,67,124,.35)",
               }}>
-                <Gem size={20} color="white" />
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+                  <path d="M6 3L2 9l10 12L22 9l-4-6H6z" stroke="white" strokeWidth="1.8" strokeLinejoin="round" fill="rgba(255,255,255,0.15)"/>
+                  <path d="M2 9h20M6 3l3 6M18 3l-3 6M12 21L9 9M12 21l3-12" stroke="rgba(255,255,255,.65)" strokeWidth="1.3" strokeLinecap="round"/>
+                </svg>
               </div>
-              <span style={{ fontWeight: 900, fontSize: 22, letterSpacing: "-0.04em", color: "#0F0A0D" }}>
-                Nail<span style={{ color: "#D4437C" }}>✦</span>Class
+              <span style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 700, fontSize: 20, letterSpacing: "-0.03em", color: "#1A0A12" }}>
+                Nail<span style={{ color: "#D4437C" }}>Class</span>
               </span>
             </Link>
           </div>
