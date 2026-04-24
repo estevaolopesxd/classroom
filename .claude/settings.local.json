@@ -17,7 +17,10 @@
       "Bash(npx shadcn@latest add card input label dialog form select badge progress table toast tabs separator avatar dropdown-menu sheet sidebar --yes)",
       "Bash(npx shadcn@latest add card input label dialog form select badge progress table tabs separator avatar dropdown-menu sheet sonner accordion checkbox textarea --yes)",
       "Bash(npx shadcn@latest add scroll-area --yes)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(find \"C:\\\\Desenvolvimento\\\\Classroom\\\\frontend\\\\src\\\\app\\\\\\(admin\\)\" -type f \\\\\\( -name \"*.tsx\" -o -name \"*.ts\" -o -name \"*.jsx\" -o -name \"*.js\" -o -name \"*.json\" -o -name \"*.md\" \\\\\\) -exec ls -lh {} \\\\;)",
+      "Bash(awk '{print $5, $9}')",
+      "Bash(find \"C:\\\\Desenvolvimento\\\\Classroom\\\\frontend\\\\src\\\\app\\\\\\(admin\\)\" -type f \\\\\\( -name \"*.tsx\" -o -name \"*.ts\" \\\\\\) -exec wc -l {} +)"
     ]
   }
 }

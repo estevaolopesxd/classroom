@@ -1,16 +1,18 @@
 import axios, { AxiosError } from "axios";
 
-// Se o bundle foi compilado com localhost mas está rodando em outro host,
-// usa o hostname real do browser na porta 8080 (API).
+// Resolve a URL da API sempre usando o hostname atual do browser + porta da API.
+// Isso garante que mesmo que o bundle tenha sido compilado com "localhost",
+// as chamadas vão para o servidor correto em produção.
 function getApiUrl(): string {
   const baked = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
-  if (typeof window === "undefined") return baked; // SSR: usa o valor baked
+  if (typeof window === "undefined") return baked; // SSR: mantém o baked
   try {
-    const { hostname } = window.location;
-    // Se o baked veio como localhost mas o browser não está em localhost, corrige.
-    const bakedHost = new URL(baked).hostname;
-    if (bakedHost === "localhost" && hostname !== "localhost") {
-      return baked.replace("localhost", hostname);
+    const parsed = new URL(baked);
+    const currentHost = window.location.hostname;
+    // Se o hostname do bundle é diferente do hostname atual, corrige
+    if (parsed.hostname !== currentHost) {
+      parsed.hostname = currentHost;
+      return parsed.origin; // ex: http://172.16.9.50:8080
     }
   } catch {}
   return baked;
