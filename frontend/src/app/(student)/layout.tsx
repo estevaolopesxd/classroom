@@ -5,25 +5,16 @@ import { useRouter, usePathname } from "next/navigation";
 import { useAuthStore } from "@/lib/stores/authStore";
 import { authApi } from "@/lib/api/auth";
 import { useEffect, useState } from "react";
-import { BookOpen, LayoutDashboard, GraduationCap, LogOut, Settings, ChevronDown, Gem, Menu, X } from "lucide-react";
+import {
+  BookOpen, LayoutDashboard, GraduationCap,
+  LogOut, Settings, ChevronDown, Gem
+} from "lucide-react";
 import { toast } from "sonner";
-
-const C = {
-  rose: "#c9476e",
-  roseLight: "#f7d6e3",
-  blush: "#fdf0f5",
-  cream: "#fffaf8",
-  black: "#1a1014",
-  muted: "#8a6070",
-  border: "#f0d5e2",
-  white: "#ffffff",
-};
 
 export default function StudentLayout({ children }: { children: React.ReactNode }) {
   const { user, isAuthenticated, logout } = useAuthStore();
   const router = useRouter();
   const pathname = usePathname();
-  const [menuOpen, setMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   useEffect(() => {
@@ -41,153 +32,310 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
 
   const navItems = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/courses", label: "Explorar Cursos", icon: BookOpen },
+    { href: "/courses", label: "Explorar", icon: BookOpen },
     { href: "/my-courses", label: "Meus Cursos", icon: GraduationCap },
   ];
 
+  const initials = `${user.firstName?.[0] ?? ""}${user.lastName?.[0] ?? ""}`.toUpperCase();
+
   return (
-    <div style={{ minHeight: "100vh", background: C.cream, display: "flex", flexDirection: "column" }}>
-      {/* Topbar */}
+    <div style={{
+      minHeight: "100vh",
+      background: "#FEFAF8",
+      display: "flex",
+      flexDirection: "column",
+      fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
+    }}>
+      {/* ── Sticky Navbar ── */}
       <header style={{
-        position: "sticky", top: 0, zIndex: 50,
-        background: "rgba(255,250,248,0.95)",
-        backdropFilter: "blur(20px)",
-        borderBottom: `1px solid ${C.border}`,
+        position: "sticky",
+        top: 0,
+        zIndex: 50,
+        background: "rgba(254,250,248,0.92)",
+        backdropFilter: "blur(24px)",
+        WebkitBackdropFilter: "blur(24px)",
+        borderBottom: "1px solid #EDCFDE",
       }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 20px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
+        <div style={{
+          maxWidth: 1280,
+          margin: "0 auto",
+          padding: "0 28px",
+          height: 68,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 20,
+        }}>
+
           {/* Logo */}
-          <Link href="/dashboard" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none", flexShrink: 0 }}>
+          <Link href="/dashboard" style={{ display: "flex", alignItems: "center", gap: 9, textDecoration: "none", flexShrink: 0 }}>
             <div style={{
-              width: 34, height: 34, borderRadius: 9,
-              background: `linear-gradient(135deg, ${C.rose}, #e8729a)`,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              boxShadow: `0 3px 10px ${C.rose}35`,
+              width: 36,
+              height: 36,
+              borderRadius: 11,
+              background: "linear-gradient(135deg, #D4437C, #8B1A42)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 3px 12px rgba(212,67,124,0.35)",
             }}>
               <Gem size={16} color="white" />
             </div>
-            <span style={{ fontWeight: 800, fontSize: 16, color: C.black, letterSpacing: "-0.02em" }}>
-              Nail<span style={{ color: C.rose }}>Class</span>
+            <span style={{ fontWeight: 900, fontSize: 18, letterSpacing: "-0.04em", color: "#0F0A0D" }}>
+              Nail<span style={{ color: "#D4437C" }}>✦</span>Class
             </span>
           </Link>
 
-          {/* Desktop nav */}
-          <nav style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          {/* Center nav */}
+          <nav style={{ display: "flex", alignItems: "center", gap: 2 }}>
             {navItems.map(({ href, label, icon: Icon }) => {
-              const active = pathname === href;
+              const active = pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
               return (
                 <Link key={href} href={href} style={{
-                  display: "inline-flex", alignItems: "center", gap: 6,
-                  padding: "7px 14px", borderRadius: 9, textDecoration: "none",
-                  fontSize: 14, fontWeight: active ? 600 : 500,
-                  background: active ? C.blush : "transparent",
-                  color: active ? C.rose : C.muted,
-                  border: active ? `1px solid ${C.border}` : "1px solid transparent",
-                  transition: "all 0.15s",
-                }}>
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 7,
+                  padding: "8px 16px",
+                  borderRadius: 10,
+                  textDecoration: "none",
+                  fontSize: 14,
+                  fontWeight: active ? 700 : 500,
+                  color: active ? "#D4437C" : "#7A5A68",
+                  background: active ? "#F9E8F0" : "transparent",
+                  position: "relative",
+                  transition: "all 0.18s",
+                  letterSpacing: "-0.01em",
+                }}
+                  onMouseEnter={e => {
+                    if (!active) {
+                      (e.currentTarget as HTMLElement).style.color = "#0F0A0D";
+                      (e.currentTarget as HTMLElement).style.background = "rgba(212,67,124,0.04)";
+                    }
+                  }}
+                  onMouseLeave={e => {
+                    if (!active) {
+                      (e.currentTarget as HTMLElement).style.color = "#7A5A68";
+                      (e.currentTarget as HTMLElement).style.background = "transparent";
+                    }
+                  }}
+                >
                   <Icon size={15} />
                   {label}
+                  {/* Rose underline for active */}
+                  {active && (
+                    <div style={{
+                      position: "absolute",
+                      bottom: -1,
+                      left: "50%",
+                      transform: "translateX(-50%)",
+                      width: "calc(100% - 24px)",
+                      height: 2,
+                      borderRadius: 2,
+                      background: "#D4437C",
+                    }} />
+                  )}
                 </Link>
               );
             })}
           </nav>
 
-          {/* User dropdown */}
+          {/* Right — avatar + dropdown */}
           <div style={{ position: "relative", flexShrink: 0 }}>
             <button
               onClick={() => setDropdownOpen(!dropdownOpen)}
               style={{
-                display: "inline-flex", alignItems: "center", gap: 8,
-                padding: "6px 12px 6px 6px", borderRadius: 10,
-                border: `1.5px solid ${C.border}`,
-                background: "white", cursor: "pointer",
-                transition: "border-color 0.15s",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 10,
+                padding: "6px 14px 6px 6px",
+                borderRadius: 100,
+                border: "1.5px solid #EDCFDE",
+                background: "white",
+                cursor: "pointer",
+                transition: "border-color 0.18s, box-shadow 0.18s",
+                boxShadow: dropdownOpen ? "0 0 0 3px rgba(212,67,124,0.1)" : "none",
               }}
             >
+              {/* Avatar circle */}
               <div style={{
-                width: 28, height: 28, borderRadius: "50%",
-                background: `linear-gradient(135deg, ${C.rose}, #e8729a)`,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 12, fontWeight: 700, color: "white",
+                width: 32,
+                height: 32,
+                borderRadius: "50%",
+                background: "linear-gradient(135deg, #D4437C, #8B1A42)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 12,
+                fontWeight: 800,
+                color: "white",
+                letterSpacing: "0.02em",
+                flexShrink: 0,
               }}>
-                {user.firstName[0]}{user.lastName[0]}
+                {initials}
               </div>
-              <span style={{ fontSize: 13, fontWeight: 600, color: C.black }}>{user.firstName}</span>
-              <ChevronDown size={14} color={C.muted} />
+              <span style={{ fontSize: 13, fontWeight: 600, color: "#0F0A0D", letterSpacing: "-0.01em" }}>
+                {user.firstName}
+              </span>
+              <ChevronDown
+                size={14}
+                color="#7A5A68"
+                style={{
+                  transition: "transform 0.2s",
+                  transform: dropdownOpen ? "rotate(180deg)" : "rotate(0deg)",
+                }}
+              />
             </button>
 
+            {/* Dropdown menu */}
             {dropdownOpen && (
               <>
-                <div style={{ position: "fixed", inset: 0, zIndex: 40 }} onClick={() => setDropdownOpen(false)} />
+                {/* Backdrop */}
+                <div
+                  style={{ position: "fixed", inset: 0, zIndex: 40 }}
+                  onClick={() => setDropdownOpen(false)}
+                />
                 <div style={{
-                  position: "absolute", right: 0, top: "calc(100% + 8px)", zIndex: 50,
-                  background: "white", border: `1px solid ${C.border}`,
-                  borderRadius: 14, padding: "6px",
-                  boxShadow: `0 8px 30px ${C.rose}15`,
-                  minWidth: 200,
+                  position: "absolute",
+                  right: 0,
+                  top: "calc(100% + 10px)",
+                  zIndex: 50,
+                  background: "white",
+                  border: "1px solid #EDCFDE",
+                  borderRadius: 18,
+                  padding: "8px",
+                  boxShadow: "0 8px 30px rgba(212,67,124,0.12), 0 2px 8px rgba(0,0,0,0.06)",
+                  minWidth: 220,
+                  animation: "dropdownIn 0.15s ease",
                 }}>
-                  <div style={{ padding: "8px 12px 10px", borderBottom: `1px solid ${C.border}`, marginBottom: 4 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: C.black }}>{user.firstName} {user.lastName}</div>
-                    <div style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>{user.email}</div>
+                  {/* User info */}
+                  <div style={{
+                    padding: "10px 14px 14px",
+                    borderBottom: "1px solid #EDCFDE",
+                    marginBottom: 6,
+                  }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+                      <div style={{
+                        width: 38,
+                        height: 38,
+                        borderRadius: "50%",
+                        background: "linear-gradient(135deg, #D4437C, #8B1A42)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: 14,
+                        fontWeight: 800,
+                        color: "white",
+                        flexShrink: 0,
+                      }}>
+                        {initials}
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: "#0F0A0D", letterSpacing: "-0.02em" }}>
+                          {user.firstName} {user.lastName}
+                        </div>
+                        <div style={{ fontSize: 12, color: "#7A5A68", marginTop: 2 }}>{user.email}</div>
+                      </div>
+                    </div>
                   </div>
+
+                  {/* Admin link */}
                   {user.role === "Admin" && (
-                    <button onClick={() => { router.push("/admin"); setDropdownOpen(false); }} style={{
-                      width: "100%", display: "flex", alignItems: "center", gap: 8,
-                      padding: "9px 12px", borderRadius: 8, border: "none",
-                      background: "none", cursor: "pointer", fontSize: 13, color: C.black, fontWeight: 500,
-                      transition: "background 0.15s", fontFamily: "inherit",
-                    }}
-                      onMouseEnter={e => (e.currentTarget.style.background = C.blush)}
+                    <button
+                      onClick={() => { router.push("/admin"); setDropdownOpen(false); }}
+                      style={{
+                        width: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                        padding: "10px 14px",
+                        borderRadius: 12,
+                        border: "none",
+                        background: "none",
+                        cursor: "pointer",
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: "#0F0A0D",
+                        fontFamily: "inherit",
+                        transition: "background 0.15s",
+                        textAlign: "left",
+                        letterSpacing: "-0.01em",
+                      }}
+                      onMouseEnter={e => (e.currentTarget.style.background = "#F9E8F0")}
                       onMouseLeave={e => (e.currentTarget.style.background = "none")}
                     >
-                      <Settings size={15} color={C.rose} />
-                      Administração
+                      <div style={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: 8,
+                        background: "linear-gradient(135deg, #D4437C, #8B1A42)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}>
+                        <Settings size={13} color="white" />
+                      </div>
+                      Área Admin
                     </button>
                   )}
-                  <button onClick={handleLogout} style={{
-                    width: "100%", display: "flex", alignItems: "center", gap: 8,
-                    padding: "9px 12px", borderRadius: 8, border: "none",
-                    background: "none", cursor: "pointer", fontSize: 13, color: "#e03060", fontWeight: 500,
-                    fontFamily: "inherit",
-                  }}
+
+                  {/* Logout */}
+                  <button
+                    onClick={handleLogout}
+                    style={{
+                      width: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      padding: "10px 14px",
+                      borderRadius: 12,
+                      border: "none",
+                      background: "none",
+                      cursor: "pointer",
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: "#e03060",
+                      fontFamily: "inherit",
+                      transition: "background 0.15s",
+                      textAlign: "left",
+                      letterSpacing: "-0.01em",
+                    }}
                     onMouseEnter={e => (e.currentTarget.style.background = "#fff0f3")}
                     onMouseLeave={e => (e.currentTarget.style.background = "none")}
                   >
-                    <LogOut size={15} />
-                    Sair
+                    <div style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: 8,
+                      background: "rgba(224,48,96,0.1)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}>
+                      <LogOut size={13} color="#e03060" />
+                    </div>
+                    Sair da conta
                   </button>
                 </div>
               </>
             )}
           </div>
-
-          {/* Mobile menu btn */}
-          <button onClick={() => setMenuOpen(!menuOpen)} style={{ background: "none", border: "none", cursor: "pointer", display: "none", padding: 4 }} className="mobile-menu-btn">
-            {menuOpen ? <X size={22} color={C.black} /> : <Menu size={22} color={C.black} />}
-          </button>
         </div>
-
-        {/* Mobile nav */}
-        {menuOpen && (
-          <div style={{ borderTop: `1px solid ${C.border}`, background: "white", padding: "12px 16px 16px" }}>
-            {navItems.map(({ href, label, icon: Icon }) => (
-              <Link key={href} href={href} onClick={() => setMenuOpen(false)} style={{
-                display: "flex", alignItems: "center", gap: 10,
-                padding: "10px 12px", borderRadius: 10, textDecoration: "none",
-                color: pathname === href ? C.rose : C.black,
-                background: pathname === href ? C.blush : "transparent",
-                fontSize: 14, fontWeight: 500, marginBottom: 4,
-              }}>
-                <Icon size={16} />
-                {label}
-              </Link>
-            ))}
-          </div>
-        )}
       </header>
 
-      <main style={{ flex: 1 }}>{children}</main>
+      {/* Main content */}
+      <main style={{ flex: 1 }}>
+        {children}
+      </main>
 
-      <style>{`@media (max-width: 767px) { .mobile-menu-btn { display: block !important; } nav { display: none !important; } }`}</style>
+      <style>{`
+        @keyframes dropdownIn {
+          from { opacity: 0; transform: translateY(-8px) scale(0.97); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @media (max-width: 700px) {
+          nav { display: none !important; }
+        }
+      `}</style>
     </div>
   );
 }

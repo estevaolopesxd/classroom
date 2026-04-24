@@ -7,24 +7,9 @@ import { authApi } from "@/lib/api/auth";
 import { useEffect, useState } from "react";
 import {
   BookOpen, LayoutDashboard, Users, Radio, Settings,
-  LogOut, Gem, Home, ChevronRight, Menu, X
+  LogOut, Gem, Home, Menu, X, ChevronRight
 } from "lucide-react";
 import { toast } from "sonner";
-
-const C = {
-  rose: "#c9476e",
-  roseDark: "#a8375a",
-  roseLight: "#f7d6e3",
-  blush: "#fdf0f5",
-  cream: "#fffaf8",
-  black: "#1a1014",
-  charcoal: "#3d2535",
-  muted: "#8a6070",
-  border: "#f0d5e2",
-  white: "#ffffff",
-  sidebarBg: "#1a1014",
-  sidebarBorder: "rgba(255,255,255,0.06)",
-};
 
 const sidebarItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
@@ -54,179 +39,433 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (!user || user.role !== "Admin") return null;
 
-  const SidebarContent = () => (
-    <>
+  const initials = `${user.firstName?.[0] ?? ""}${user.lastName?.[0] ?? ""}`.toUpperCase();
+
+  const SidebarContent = ({ onClose }: { onClose?: () => void }) => (
+    <div style={{
+      display: "flex",
+      flexDirection: "column",
+      height: "100%",
+      background: "#0F0A0D",
+    }}>
       {/* Logo */}
-      <div style={{ padding: "20px 20px 16px", borderBottom: `1px solid ${C.sidebarBorder}` }}>
-        <Link href="/admin" style={{ display: "flex", alignItems: "center", gap: 9, textDecoration: "none" }}>
+      <div style={{
+        padding: "24px 20px 20px",
+        borderBottom: "1px solid rgba(254,250,248,0.06)",
+      }}>
+        <Link
+          href="/admin"
+          onClick={onClose}
+          style={{ display: "inline-flex", alignItems: "center", gap: 10, textDecoration: "none" }}
+        >
           <div style={{
-            width: 36, height: 36, borderRadius: 10,
-            background: `linear-gradient(135deg, ${C.rose}, #e8729a)`,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            boxShadow: `0 4px 12px ${C.rose}50`,
+            width: 38,
+            height: 38,
+            borderRadius: 12,
+            background: "linear-gradient(135deg, #D4437C, #8B1A42)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: "0 4px 16px rgba(212,67,124,0.45)",
           }}>
             <Gem size={17} color="white" />
           </div>
-          <div>
-            <span style={{ fontWeight: 800, fontSize: 16, color: "white" }}>Nail</span>
-            <span style={{ fontWeight: 800, fontSize: 16, color: C.rose }}>Class</span>
-          </div>
+          <span style={{ fontWeight: 900, fontSize: 18, letterSpacing: "-0.04em", color: "#FEFAF8" }}>
+            Nail<span style={{ color: "#D4437C" }}>✦</span>Class
+          </span>
         </Link>
-        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 4, paddingLeft: 2, letterSpacing: "0.08em", textTransform: "uppercase", fontWeight: 600 }}>
-          Administração
+        <div style={{
+          fontSize: 10,
+          fontWeight: 700,
+          color: "rgba(254,250,248,0.2)",
+          letterSpacing: "0.14em",
+          textTransform: "uppercase",
+          marginTop: 8,
+          paddingLeft: 2,
+        }}>
+          Painel Administrativo
         </div>
       </div>
 
       {/* Navigation */}
-      <nav style={{ flex: 1, padding: "12px 12px" }}>
-        <div style={{ fontSize: 10, color: "rgba(255,255,255,0.25)", letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 700, padding: "4px 10px 10px" }}>
-          Menu principal
+      <nav style={{ flex: 1, padding: "16px 12px", overflowY: "auto" }}>
+        <div style={{
+          fontSize: 10,
+          fontWeight: 700,
+          color: "rgba(254,250,248,0.2)",
+          letterSpacing: "0.14em",
+          textTransform: "uppercase",
+          padding: "4px 10px 14px",
+        }}>
+          MENU
         </div>
+
         {sidebarItems.map(({ href, label, icon: Icon, exact }) => {
           const isActive = exact ? pathname === href : pathname.startsWith(href);
           return (
-            <Link key={href} href={href} onClick={() => setMobileOpen(false)} style={{
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "9px 12px", borderRadius: 10, marginBottom: 2, textDecoration: "none",
-              background: isActive ? `${C.rose}20` : "transparent",
-              border: isActive ? `1px solid ${C.rose}30` : "1px solid transparent",
-              transition: "all 0.15s",
-            }}
-              onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = "rgba(255,255,255,0.05)"; }}
-              onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = "transparent"; }}
+            <Link
+              key={href}
+              href={href}
+              onClick={onClose}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "11px 14px",
+                borderRadius: 12,
+                marginBottom: 3,
+                textDecoration: "none",
+                background: isActive ? "rgba(212,67,124,0.1)" : "transparent",
+                borderLeft: isActive ? "3px solid #D4437C" : "3px solid transparent",
+                transition: "all 0.18s",
+              }}
+              onMouseEnter={e => {
+                if (!isActive) {
+                  (e.currentTarget as HTMLElement).style.background = "rgba(254,250,248,0.04)";
+                }
+              }}
+              onMouseLeave={e => {
+                if (!isActive) {
+                  (e.currentTarget as HTMLElement).style.background = "transparent";
+                }
+              }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <Icon size={16} color={isActive ? C.rose : "rgba(255,255,255,0.5)"} />
-                <span style={{ fontSize: 14, fontWeight: isActive ? 600 : 400, color: isActive ? "white" : "rgba(255,255,255,0.6)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 10,
+                  background: isActive ? "rgba(212,67,124,0.15)" : "rgba(254,250,248,0.04)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                  transition: "background 0.18s",
+                }}>
+                  <Icon size={15} color={isActive ? "#D4437C" : "rgba(254,250,248,0.4)"} />
+                </div>
+                <span style={{
+                  fontSize: 14,
+                  fontWeight: isActive ? 700 : 400,
+                  color: isActive ? "#FEFAF8" : "rgba(254,250,248,0.5)",
+                  letterSpacing: "-0.01em",
+                  transition: "color 0.18s",
+                }}>
                   {label}
                 </span>
               </div>
-              {isActive && <ChevronRight size={14} color={C.rose} />}
+              {isActive && (
+                <ChevronRight size={14} color="#D4437C" />
+              )}
             </Link>
           );
         })}
       </nav>
 
-      {/* User / bottom */}
-      <div style={{ padding: "12px", borderTop: `1px solid ${C.sidebarBorder}` }}>
-        <Link href="/dashboard" onClick={() => setMobileOpen(false)} style={{
-          display: "flex", alignItems: "center", gap: 10,
-          padding: "9px 12px", borderRadius: 10, textDecoration: "none",
-          color: "rgba(255,255,255,0.45)", fontSize: 13, marginBottom: 4,
-          transition: "all 0.15s",
-        }}
-          onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.color = "rgba(255,255,255,0.75)"; }}
-          onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "rgba(255,255,255,0.45)"; }}
+      {/* Bottom section */}
+      <div style={{ padding: "12px", borderTop: "1px solid rgba(254,250,248,0.06)" }}>
+        {/* Área da Aluna link */}
+        <Link
+          href="/dashboard"
+          onClick={onClose}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            padding: "10px 14px",
+            borderRadius: 12,
+            textDecoration: "none",
+            color: "rgba(254,250,248,0.35)",
+            fontSize: 13,
+            fontWeight: 500,
+            marginBottom: 8,
+            transition: "all 0.18s",
+            letterSpacing: "-0.01em",
+          }}
+          onMouseEnter={e => {
+            (e.currentTarget as HTMLElement).style.background = "rgba(254,250,248,0.04)";
+            (e.currentTarget as HTMLElement).style.color = "rgba(254,250,248,0.65)";
+          }}
+          onMouseLeave={e => {
+            (e.currentTarget as HTMLElement).style.background = "transparent";
+            (e.currentTarget as HTMLElement).style.color = "rgba(254,250,248,0.35)";
+          }}
         >
-          <Home size={15} />
+          <div style={{
+            width: 28,
+            height: 28,
+            borderRadius: 8,
+            background: "rgba(254,250,248,0.04)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}>
+            <Home size={13} color="rgba(254,250,248,0.35)" />
+          </div>
           Área da Aluna
         </Link>
 
-        {/* User info */}
+        {/* User card */}
         <div style={{
-          display: "flex", alignItems: "center", gap: 10,
-          padding: "9px 12px", borderRadius: 10,
-          background: "rgba(255,255,255,0.04)",
-          border: `1px solid ${C.sidebarBorder}`,
-          marginBottom: 6,
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          padding: "12px 14px",
+          borderRadius: 14,
+          background: "rgba(254,250,248,0.04)",
+          border: "1px solid rgba(254,250,248,0.06)",
+          marginBottom: 8,
         }}>
           <div style={{
-            width: 30, height: 30, borderRadius: "50%",
-            background: `linear-gradient(135deg, ${C.rose}, #e8729a)`,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 12, fontWeight: 700, color: "white", flexShrink: 0,
+            width: 36,
+            height: 36,
+            borderRadius: "50%",
+            background: "linear-gradient(135deg, #D4437C, #8B1A42)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 13,
+            fontWeight: 800,
+            color: "white",
+            flexShrink: 0,
+            boxShadow: "0 2px 8px rgba(212,67,124,0.3)",
           }}>
-            {user.firstName[0]}{user.lastName[0]}
+            {initials}
           </div>
           <div style={{ overflow: "hidden", flex: 1 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: "white", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            <div style={{
+              fontSize: 13,
+              fontWeight: 700,
+              color: "#FEFAF8",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              letterSpacing: "-0.02em",
+            }}>
               {user.firstName} {user.lastName}
             </div>
-            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            <div style={{
+              fontSize: 11,
+              color: "rgba(254,250,248,0.3)",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              marginTop: 2,
+            }}>
               {user.email}
             </div>
           </div>
         </div>
 
-        <button onClick={handleLogout} style={{
-          width: "100%", display: "flex", alignItems: "center", gap: 10,
-          padding: "9px 12px", borderRadius: 10, border: "none",
-          background: "none", cursor: "pointer",
-          color: "rgba(255,100,120,0.7)", fontSize: 13, fontWeight: 500,
-          fontFamily: "inherit", transition: "all 0.15s",
-        }}
-          onMouseEnter={e => { e.currentTarget.style.background = "rgba(201,71,110,0.1)"; e.currentTarget.style.color = "#ff8090"; }}
-          onMouseLeave={e => { e.currentTarget.style.background = "none"; e.currentTarget.style.color = "rgba(255,100,120,0.7)"; }}
+        {/* Logout button */}
+        <button
+          onClick={handleLogout}
+          style={{
+            width: "100%",
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            padding: "10px 14px",
+            borderRadius: 12,
+            border: "none",
+            background: "none",
+            cursor: "pointer",
+            color: "rgba(255,80,110,0.65)",
+            fontSize: 13,
+            fontWeight: 600,
+            fontFamily: "inherit",
+            transition: "all 0.18s",
+            textAlign: "left",
+            letterSpacing: "-0.01em",
+          }}
+          onMouseEnter={e => {
+            (e.currentTarget as HTMLElement).style.background = "rgba(212,67,124,0.1)";
+            (e.currentTarget as HTMLElement).style.color = "#ff6080";
+          }}
+          onMouseLeave={e => {
+            (e.currentTarget as HTMLElement).style.background = "none";
+            (e.currentTarget as HTMLElement).style.color = "rgba(255,80,110,0.65)";
+          }}
         >
-          <LogOut size={15} />
+          <div style={{
+            width: 28,
+            height: 28,
+            borderRadius: 8,
+            background: "rgba(212,67,124,0.08)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}>
+            <LogOut size={13} />
+          </div>
           Sair
         </button>
       </div>
-    </>
+    </div>
   );
 
   return (
-    <div style={{ minHeight: "100vh", background: C.cream, display: "flex" }}>
-      {/* Desktop Sidebar */}
-      <aside style={{
-        width: 240, flexShrink: 0,
-        background: C.sidebarBg,
-        display: "flex", flexDirection: "column",
-        position: "fixed", top: 0, bottom: 0, left: 0,
-        overflowY: "auto",
-        zIndex: 40,
-      }} className="desktop-sidebar">
+    <div style={{
+      minHeight: "100vh",
+      background: "#FEFAF8",
+      display: "flex",
+      fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
+    }}>
+
+      {/* ── Desktop Sidebar (fixed 250px) ── */}
+      <aside
+        className="admin-sidebar-desktop"
+        style={{
+          width: 250,
+          flexShrink: 0,
+          background: "#0F0A0D",
+          position: "fixed",
+          top: 0,
+          bottom: 0,
+          left: 0,
+          overflowY: "auto",
+          zIndex: 40,
+        }}
+      >
         <SidebarContent />
       </aside>
 
-      {/* Mobile sidebar overlay */}
+      {/* ── Mobile Overlay ── */}
       {mobileOpen && (
         <>
-          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 45 }} onClick={() => setMobileOpen(false)} />
+          {/* Backdrop */}
+          <div
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(15,10,13,0.6)",
+              zIndex: 45,
+              backdropFilter: "blur(4px)",
+            }}
+            onClick={() => setMobileOpen(false)}
+          />
+          {/* Slide-in sidebar */}
           <aside style={{
-            position: "fixed", top: 0, bottom: 0, left: 0, width: 240,
-            background: C.sidebarBg, display: "flex", flexDirection: "column",
-            zIndex: 50, overflowY: "auto",
+            position: "fixed",
+            top: 0,
+            bottom: 0,
+            left: 0,
+            width: 250,
+            background: "#0F0A0D",
+            display: "flex",
+            flexDirection: "column",
+            zIndex: 50,
+            overflowY: "auto",
+            animation: "slideInLeft 0.22s ease",
           }}>
-            <SidebarContent />
+            {/* Close button */}
+            <button
+              onClick={() => setMobileOpen(false)}
+              style={{
+                position: "absolute",
+                top: 16,
+                right: 16,
+                width: 32,
+                height: 32,
+                borderRadius: 8,
+                background: "rgba(254,250,248,0.06)",
+                border: "none",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                zIndex: 1,
+              }}
+            >
+              <X size={15} color="rgba(254,250,248,0.5)" />
+            </button>
+            <SidebarContent onClose={() => setMobileOpen(false)} />
           </aside>
         </>
       )}
 
-      {/* Content */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column" }} className="admin-content">
-        {/* Mobile topbar */}
-        <header style={{
-          background: "white", borderBottom: `1px solid ${C.border}`,
-          position: "sticky", top: 0, zIndex: 30,
-          display: "none",
-        }} className="mobile-header">
-          <div style={{ padding: "0 16px", height: 60, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      {/* ── Main content area ── */}
+      <div
+        className="admin-main-content"
+        style={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          minHeight: "100vh",
+        }}
+      >
+        {/* Mobile top header */}
+        <header
+          className="admin-mobile-header"
+          style={{
+            background: "white",
+            borderBottom: "1px solid #EDCFDE",
+            position: "sticky",
+            top: 0,
+            zIndex: 30,
+            display: "none",
+          }}
+        >
+          <div style={{
+            padding: "0 20px",
+            height: 64,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}>
             <Link href="/admin" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
-              <div style={{ width: 30, height: 30, borderRadius: 8, background: `linear-gradient(135deg, ${C.rose}, #e8729a)`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <div style={{
+                width: 32,
+                height: 32,
+                borderRadius: 9,
+                background: "linear-gradient(135deg, #D4437C, #8B1A42)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxShadow: "0 2px 8px rgba(212,67,124,0.3)",
+              }}>
                 <Gem size={14} color="white" />
               </div>
-              <span style={{ fontWeight: 800, fontSize: 15, color: C.black }}>Nail<span style={{ color: C.rose }}>Class</span></span>
+              <span style={{ fontWeight: 900, fontSize: 16, letterSpacing: "-0.04em", color: "#0F0A0D" }}>
+                Nail<span style={{ color: "#D4437C" }}>✦</span>Class
+              </span>
             </Link>
-            <button onClick={() => setMobileOpen(true)} style={{ background: "none", border: "none", cursor: "pointer" }}>
-              <Menu size={22} color={C.black} />
+            <button
+              onClick={() => setMobileOpen(true)}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                padding: 6,
+                borderRadius: 8,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Menu size={22} color="#0F0A0D" />
             </button>
           </div>
         </header>
 
-        <main style={{ flex: 1, padding: "28px 28px" }}>
+        {/* Page content */}
+        <main style={{ flex: 1, padding: "32px" }}>
           {children}
         </main>
       </div>
 
       <style>{`
+        @keyframes slideInLeft {
+          from { transform: translateX(-100%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
         @media (min-width: 768px) {
-          .admin-content { margin-left: 240px; }
+          .admin-main-content { margin-left: 250px; }
         }
         @media (max-width: 767px) {
-          .desktop-sidebar { display: none !important; }
-          .mobile-header { display: block !important; }
-          .admin-content { margin-left: 0 !important; }
+          .admin-sidebar-desktop { display: none !important; }
+          .admin-mobile-header { display: block !important; }
+          .admin-main-content { margin-left: 0 !important; }
         }
       `}</style>
     </div>

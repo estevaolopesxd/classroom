@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useAuthStore } from "@/lib/stores/authStore";
 import { authApi } from "@/lib/api/auth";
-import { Gem, Loader2, Eye, EyeOff, Sparkles } from "lucide-react";
+import { Gem, Loader2, Eye, EyeOff, CheckCircle, ArrowLeft, Star } from "lucide-react";
 import Link from "next/link";
 
 export default function LoginPage() {
@@ -15,17 +15,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-
-  const C = {
-    rose: "#c9476e",
-    roseLight: "#f7d6e3",
-    blush: "#fdf0f5",
-    cream: "#fffaf8",
-    black: "#1a1014",
-    muted: "#8a6070",
-    border: "#f0d5e2",
-    inputBorder: "#e8c8d8",
-  };
+  const [emailFocused, setEmailFocused] = useState(false);
+  const [passwordFocused, setPasswordFocused] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,209 +36,442 @@ export default function LoginPage() {
   return (
     <div style={{
       minHeight: "100vh",
-      background: C.cream,
       display: "flex",
-      position: "relative",
+      fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
+      background: "#FEFAF8",
       overflow: "hidden",
     }}>
-      {/* Left panel — decorative */}
-      <div style={{
-        display: "none",
-        flex: "0 0 45%",
-        background: `linear-gradient(145deg, ${C.rose}, #e0567a, #d4386a)`,
-        position: "relative",
-        overflow: "hidden",
-      }} className="md-show">
-        {/* decorative circles */}
-        <div style={{ position: "absolute", top: -60, right: -60, width: 260, height: 260, borderRadius: "50%", background: "rgba(255,255,255,0.08)" }} />
-        <div style={{ position: "absolute", bottom: 80, left: -80, width: 320, height: 320, borderRadius: "50%", background: "rgba(255,255,255,0.06)" }} />
-        <div style={{ position: "absolute", top: "40%", right: 40, width: 120, height: 120, borderRadius: "50%", background: "rgba(255,255,255,0.06)" }} />
 
-        <div style={{ position: "relative", zIndex: 1, padding: 48, height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-          <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
-            <div style={{ width: 38, height: 38, borderRadius: 10, background: "rgba(255,255,255,0.25)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      {/* ── LEFT PANEL ── */}
+      <div
+        className="login-left-panel"
+        style={{
+          flex: "0 0 42%",
+          background: "#0F0A0D",
+          position: "relative",
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between",
+          padding: "48px",
+        }}
+      >
+        {/* Rose gradient orb */}
+        <div style={{
+          position: "absolute",
+          top: -120,
+          right: -120,
+          width: 480,
+          height: 480,
+          borderRadius: "50%",
+          background: "radial-gradient(circle, rgba(212,67,124,0.22) 0%, transparent 65%)",
+          pointerEvents: "none",
+        }} />
+        <div style={{
+          position: "absolute",
+          bottom: -80,
+          left: -80,
+          width: 360,
+          height: 360,
+          borderRadius: "50%",
+          background: "radial-gradient(circle, rgba(139,26,66,0.18) 0%, transparent 65%)",
+          pointerEvents: "none",
+        }} />
+        <div style={{
+          position: "absolute",
+          top: "45%",
+          right: 60,
+          width: 120,
+          height: 120,
+          borderRadius: "50%",
+          background: "radial-gradient(circle, rgba(200,169,122,0.1) 0%, transparent 70%)",
+          pointerEvents: "none",
+        }} />
+
+        {/* Content */}
+        <div style={{ position: "relative", zIndex: 1 }}>
+          {/* Logo */}
+          <Link href="/" style={{ display: "inline-flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
+            <div style={{
+              width: 40,
+              height: 40,
+              borderRadius: 12,
+              background: "linear-gradient(135deg, #D4437C, #8B1A42)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 4px 16px rgba(212,67,124,0.4)",
+            }}>
               <Gem size={18} color="white" />
             </div>
-            <span style={{ fontWeight: 800, fontSize: 18, color: "white" }}>NailClass</span>
+            <span style={{ fontWeight: 900, fontSize: 20, letterSpacing: "-0.04em", color: "#FEFAF8" }}>
+              Nail<span style={{ color: "#D4437C" }}>✦</span>Class
+            </span>
           </Link>
+        </div>
 
-          <div>
-            <div style={{ fontSize: 56, marginBottom: 24 }}>💅</div>
-            <h2 style={{ fontSize: 34, fontWeight: 800, color: "white", letterSpacing: "-0.03em", lineHeight: 1.15, marginBottom: 16 }}>
-              Transforme sua<br />paixão em carreira
-            </h2>
-            <p style={{ color: "rgba(255,255,255,0.8)", fontSize: 15, lineHeight: 1.7, maxWidth: 320 }}>
-              Aprenda nail art, gel e muito mais com as melhores professoras do Brasil. Do seu jeito, no seu tempo.
-            </p>
-          </div>
+        <div style={{ position: "relative", zIndex: 1 }}>
+          {/* Emoji */}
+          <div style={{ fontSize: 64, marginBottom: 28, lineHeight: 1 }}>💅</div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {/* Headline */}
+          <h2 style={{
+            fontSize: "clamp(28px, 3vw, 40px)",
+            fontWeight: 900,
+            letterSpacing: "-0.05em",
+            color: "#FEFAF8",
+            lineHeight: 1.08,
+            marginBottom: 16,
+          }}>
+            Bem-vinda<br />de volta.
+          </h2>
+          <p style={{
+            fontSize: 15,
+            color: "rgba(254,250,248,0.5)",
+            lineHeight: 1.75,
+            marginBottom: 40,
+            maxWidth: 340,
+          }}>
+            Continue sua jornada de aprendizado e evolua suas habilidades em nail art.
+          </p>
+
+          {/* Feature bullets */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 48 }}>
             {[
-              "Mais de 50 cursos disponíveis",
+              "Mais de 50 cursos em vídeo HD",
               "+2.400 alunas já transformaram suas vidas",
-              "Certificado de conclusão incluso",
+              "Certificado de conclusão em todos os cursos",
             ].map((item) => (
-              <div key={item} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div style={{ width: 20, height: 20, borderRadius: "50%", background: "rgba(255,255,255,0.3)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <Sparkles size={11} color="white" />
+              <div key={item} style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                <div style={{
+                  width: 26,
+                  height: 26,
+                  borderRadius: "50%",
+                  background: "rgba(212,67,124,0.15)",
+                  border: "1px solid rgba(212,67,124,0.3)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                }}>
+                  <CheckCircle size={13} color="#D4437C" />
                 </div>
-                <span style={{ fontSize: 14, color: "rgba(255,255,255,0.85)" }}>{item}</span>
+                <span style={{ fontSize: 14, color: "rgba(254,250,248,0.7)", lineHeight: 1.5 }}>{item}</span>
               </div>
             ))}
           </div>
         </div>
+
+        {/* Testimonial quote */}
+        <div style={{
+          position: "relative",
+          zIndex: 1,
+          padding: "24px",
+          borderRadius: 20,
+          background: "rgba(254,250,248,0.04)",
+          border: "1px solid rgba(212,67,124,0.15)",
+          backdropFilter: "blur(10px)",
+        }}>
+          <div style={{ display: "flex", gap: 3, marginBottom: 12 }}>
+            {[...Array(5)].map((_, i) => <Star key={i} size={13} color="#C8A97A" fill="#C8A97A" />)}
+          </div>
+          <p style={{
+            fontSize: 13,
+            color: "rgba(254,250,248,0.65)",
+            lineHeight: 1.75,
+            fontStyle: "italic",
+            marginBottom: 16,
+          }}>
+            &ldquo;Em 3 meses aprendi tudo sobre gel e hoje atendo 40+ clientes. A melhor decisão da minha carreira.&rdquo;
+          </p>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{
+              width: 34,
+              height: 34,
+              borderRadius: "50%",
+              background: "linear-gradient(135deg, #D4437C, #8B1A42)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontWeight: 800,
+              color: "white",
+              fontSize: 13,
+              flexShrink: 0,
+            }}>
+              M
+            </div>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#FEFAF8" }}>Mariana S.</div>
+              <div style={{ fontSize: 11, color: "rgba(254,250,248,0.35)" }}>Nail Designer Profissional</div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Right panel — form */}
+      {/* ── RIGHT PANEL ── */}
       <div style={{
         flex: 1,
         display: "flex",
+        flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        padding: "40px 24px",
+        padding: "48px 32px",
+        background: "#FEFAF8",
+        position: "relative",
       }}>
-        <div style={{ width: "100%", maxWidth: 420 }}>
-          {/* Logo (mobile) */}
-          <Link href="/" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none", justifyContent: "center", marginBottom: 36 }}>
-            <div style={{
-              width: 44, height: 44, borderRadius: 12,
-              background: `linear-gradient(135deg, ${C.rose}, #e8729a)`,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              boxShadow: `0 4px 14px ${C.rose}40`,
-            }}>
-              <Gem size={20} color="white" />
-            </div>
-            <div>
-              <span style={{ fontWeight: 800, fontSize: 20, color: C.black }}>Nail</span>
-              <span style={{ fontWeight: 800, fontSize: 20, color: C.rose }}>Class</span>
-            </div>
-          </Link>
-
-          {/* Card */}
-          <div style={{
+        {/* Back link */}
+        <div style={{ position: "absolute", top: 32, left: 32 }}>
+          <Link href="/" style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 8,
+            color: "#7A5A68",
+            textDecoration: "none",
+            fontSize: 13,
+            fontWeight: 500,
+            padding: "8px 14px",
+            borderRadius: 100,
+            border: "1px solid #EDCFDE",
             background: "white",
-            borderRadius: 24,
-            border: `1px solid ${C.border}`,
-            padding: "36px 32px",
-            boxShadow: `0 8px 40px ${C.rose}12`,
+            transition: "all 0.2s",
           }}>
-            <div style={{ textAlign: "center", marginBottom: 28 }}>
-              <h1 style={{ fontSize: 24, fontWeight: 800, color: C.black, letterSpacing: "-0.03em", marginBottom: 6 }}>
-                Bem-vinda de volta 💕
-              </h1>
-              <p style={{ color: C.muted, fontSize: 14 }}>
-                Entre com suas credenciais para acessar a plataforma
-              </p>
-            </div>
+            <ArrowLeft size={14} />
+            Voltar ao início
+          </Link>
+        </div>
 
-            <form onSubmit={handleSubmit}>
-              <div style={{ marginBottom: 18 }}>
-                <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: C.black, marginBottom: 7 }}>
-                  E-mail
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="seu@email.com"
-                  required
-                  autoComplete="email"
-                  style={{
-                    width: "100%", boxSizing: "border-box",
-                    padding: "11px 14px", borderRadius: 10,
-                    border: `1.5px solid ${C.inputBorder}`,
-                    background: C.blush,
-                    color: C.black, fontSize: 14,
-                    outline: "none",
-                    transition: "border-color 0.2s",
-                    fontFamily: "inherit",
-                  }}
-                  onFocus={(e) => { e.target.style.borderColor = C.rose; e.target.style.background = "white"; }}
-                  onBlur={(e) => { e.target.style.borderColor = C.inputBorder; e.target.style.background = C.blush; }}
-                />
+        <div style={{ width: "100%", maxWidth: 420 }}>
+          {/* Logo mark (visible on mobile) */}
+          <div className="login-logo-mobile" style={{
+            display: "none",
+            justifyContent: "center",
+            marginBottom: 40,
+          }}>
+            <Link href="/" style={{ display: "inline-flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
+              <div style={{
+                width: 44,
+                height: 44,
+                borderRadius: 13,
+                background: "linear-gradient(135deg, #D4437C, #8B1A42)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxShadow: "0 4px 16px rgba(212,67,124,0.35)",
+              }}>
+                <Gem size={20} color="white" />
               </div>
-
-              <div style={{ marginBottom: 28 }}>
-                <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: C.black, marginBottom: 7 }}>
-                  Senha
-                </label>
-                <div style={{ position: "relative" }}>
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    required
-                    autoComplete="current-password"
-                    style={{
-                      width: "100%", boxSizing: "border-box",
-                      padding: "11px 42px 11px 14px", borderRadius: 10,
-                      border: `1.5px solid ${C.inputBorder}`,
-                      background: C.blush,
-                      color: C.black, fontSize: 14,
-                      outline: "none",
-                      fontFamily: "inherit",
-                    }}
-                    onFocus={(e) => { e.target.style.borderColor = C.rose; e.target.style.background = "white"; }}
-                    onBlur={(e) => { e.target.style.borderColor = C.inputBorder; e.target.style.background = C.blush; }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    style={{
-                      position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)",
-                      background: "none", border: "none", cursor: "pointer", color: C.muted, padding: 2,
-                    }}
-                  >
-                    {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
-                  </button>
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                style={{
-                  width: "100%", padding: "13px",
-                  borderRadius: 12, border: "none",
-                  background: loading ? `${C.rose}80` : `linear-gradient(135deg, ${C.rose}, #e8729a)`,
-                  color: "white", fontSize: 15, fontWeight: 700,
-                  cursor: loading ? "not-allowed" : "pointer",
-                  display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                  boxShadow: loading ? "none" : `0 6px 20px ${C.rose}40`,
-                  transition: "opacity 0.2s",
-                  fontFamily: "inherit",
-                  letterSpacing: "-0.01em",
-                }}
-              >
-                {loading ? (
-                  <>
-                    <Loader2 size={17} style={{ animation: "spin 1s linear infinite" }} />
-                    Entrando...
-                  </>
-                ) : (
-                  "Entrar na plataforma"
-                )}
-              </button>
-            </form>
-
-            <div style={{ textAlign: "center", marginTop: 20 }}>
-              <span style={{ fontSize: 13, color: C.muted }}>Não tem conta? </span>
-              <Link href="/login" style={{ fontSize: 13, color: C.rose, fontWeight: 600, textDecoration: "none" }}>
-                Fale conosco
-              </Link>
-            </div>
+              <span style={{ fontWeight: 900, fontSize: 22, letterSpacing: "-0.04em", color: "#0F0A0D" }}>
+                Nail<span style={{ color: "#D4437C" }}>✦</span>Class
+              </span>
+            </Link>
           </div>
 
-          <p style={{ textAlign: "center", marginTop: 20, fontSize: 12, color: C.muted }}>
+          {/* Heading */}
+          <div style={{ marginBottom: 40 }}>
+            <h1 style={{
+              fontSize: 32,
+              fontWeight: 900,
+              letterSpacing: "-0.05em",
+              color: "#0F0A0D",
+              marginBottom: 10,
+              lineHeight: 1.1,
+            }}>
+              Acesse sua conta
+            </h1>
+            <p style={{ fontSize: 14, color: "#7A5A68", lineHeight: 1.6 }}>
+              Entre com suas credenciais para continuar aprendendo.
+            </p>
+          </div>
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+            {/* Email */}
+            <div style={{ marginBottom: 20 }}>
+              <label style={{
+                display: "block",
+                fontSize: 13,
+                fontWeight: 700,
+                color: "#0F0A0D",
+                marginBottom: 8,
+                letterSpacing: "-0.01em",
+              }}>
+                E-mail
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="seu@email.com"
+                required
+                autoComplete="email"
+                onFocus={() => setEmailFocused(true)}
+                onBlur={() => setEmailFocused(false)}
+                style={{
+                  width: "100%",
+                  boxSizing: "border-box",
+                  padding: "13px 16px",
+                  borderRadius: 12,
+                  border: emailFocused ? "1.5px solid #D4437C" : "1.5px solid #EDCFDE",
+                  background: emailFocused ? "white" : "#FEFAF8",
+                  color: "#0F0A0D",
+                  fontSize: 14,
+                  outline: "none",
+                  fontFamily: "inherit",
+                  transition: "border-color 0.2s, background 0.2s, box-shadow 0.2s",
+                  boxShadow: emailFocused ? "0 0 0 3px rgba(212,67,124,0.12)" : "none",
+                }}
+              />
+            </div>
+
+            {/* Password */}
+            <div style={{ marginBottom: 32 }}>
+              <label style={{
+                display: "block",
+                fontSize: 13,
+                fontWeight: 700,
+                color: "#0F0A0D",
+                marginBottom: 8,
+                letterSpacing: "-0.01em",
+              }}>
+                Senha
+              </label>
+              <div style={{ position: "relative" }}>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  autoComplete="current-password"
+                  onFocus={() => setPasswordFocused(true)}
+                  onBlur={() => setPasswordFocused(false)}
+                  style={{
+                    width: "100%",
+                    boxSizing: "border-box",
+                    padding: "13px 48px 13px 16px",
+                    borderRadius: 12,
+                    border: passwordFocused ? "1.5px solid #D4437C" : "1.5px solid #EDCFDE",
+                    background: passwordFocused ? "white" : "#FEFAF8",
+                    color: "#0F0A0D",
+                    fontSize: 14,
+                    outline: "none",
+                    fontFamily: "inherit",
+                    transition: "border-color 0.2s, background 0.2s, box-shadow 0.2s",
+                    boxShadow: passwordFocused ? "0 0 0 3px rgba(212,67,124,0.12)" : "none",
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: "absolute",
+                    right: 14,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    color: "#7A5A68",
+                    display: "flex",
+                    alignItems: "center",
+                    padding: 4,
+                    borderRadius: 6,
+                    transition: "color 0.2s",
+                  }}
+                >
+                  {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                </button>
+              </div>
+            </div>
+
+            {/* Submit */}
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                width: "100%",
+                padding: "15px",
+                borderRadius: 100,
+                border: "none",
+                background: loading
+                  ? "rgba(212,67,124,0.5)"
+                  : "linear-gradient(135deg, #D4437C 0%, #8B1A42 100%)",
+                backgroundSize: "200% auto",
+                color: "white",
+                fontSize: 15,
+                fontWeight: 800,
+                cursor: loading ? "not-allowed" : "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 10,
+                boxShadow: loading ? "none" : "0 8px 28px rgba(212,67,124,0.4)",
+                transition: "opacity 0.2s, transform 0.2s, box-shadow 0.2s",
+                fontFamily: "inherit",
+                letterSpacing: "-0.02em",
+                animation: loading ? "none" : "shimmer 3s linear infinite",
+              }}
+              onMouseEnter={e => {
+                if (!loading) {
+                  (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)";
+                  (e.currentTarget as HTMLElement).style.boxShadow = "0 14px 36px rgba(212,67,124,0.5)";
+                }
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLElement).style.transform = "translateY(0)";
+                (e.currentTarget as HTMLElement).style.boxShadow = "0 8px 28px rgba(212,67,124,0.4)";
+              }}
+            >
+              {loading ? (
+                <>
+                  <Loader2 size={18} style={{ animation: "spin 1s linear infinite" }} />
+                  Entrando...
+                </>
+              ) : (
+                "Entrar na plataforma"
+              )}
+            </button>
+          </form>
+
+          {/* Divider */}
+          <div style={{ display: "flex", alignItems: "center", gap: 16, margin: "28px 0" }}>
+            <div style={{ flex: 1, height: 1, background: "#EDCFDE" }} />
+            <span style={{ fontSize: 12, color: "#7A5A68", fontWeight: 500 }}>ou</span>
+            <div style={{ flex: 1, height: 1, background: "#EDCFDE" }} />
+          </div>
+
+          {/* Bottom link */}
+          <p style={{ textAlign: "center", fontSize: 13, color: "#7A5A68" }}>
+            Ainda não tem conta?{" "}
+            <Link href="/login" style={{
+              color: "#D4437C",
+              fontWeight: 700,
+              textDecoration: "none",
+              letterSpacing: "-0.01em",
+            }}>
+              Fale conosco
+            </Link>
+          </p>
+
+          {/* Footer note */}
+          <p style={{ textAlign: "center", marginTop: 40, fontSize: 12, color: "rgba(122,90,104,0.5)" }}>
             © {new Date().getFullYear()} NailClass · Todos os direitos reservados
           </p>
         </div>
       </div>
 
       <style>{`
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @media (min-width: 768px) { .md-show { display: flex !important; } }
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+        @keyframes shimmer {
+          0% { background-position: -200% center; }
+          100% { background-position: 200% center; }
+        }
+        @media (max-width: 768px) {
+          .login-left-panel { display: none !important; }
+          .login-logo-mobile { display: flex !important; }
+        }
       `}</style>
     </div>
   );

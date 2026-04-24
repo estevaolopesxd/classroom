@@ -1,8 +1,7 @@
 import Link from "next/link";
 import {
-  BookOpen, Play, Users, Star, ChevronRight,
-  Sparkles, Heart, Award, CheckCircle, ArrowRight,
-  Clock, Gem, Palette
+  Play, Users, Star, Sparkles, ArrowRight,
+  Gem, CheckCircle, BookOpen, Clock, Heart, Award
 } from "lucide-react";
 
 async function getPublishedCourses() {
@@ -21,392 +20,1034 @@ async function getPublishedCourses() {
 export default async function LandingPage() {
   const courses = await getPublishedCourses();
 
-  const C = {
-    rose: "#c9476e",
-    roseDark: "#a8375a",
-    roseLight: "#f7d6e3",
-    blush: "#fdf0f5",
-    cream: "#fffaf8",
-    black: "#1a1014",
-    charcoal: "#3d2535",
-    muted: "#8a6070",
-    gold: "#c9963a",
-    goldLight: "#fdf3e0",
-    white: "#ffffff",
-    border: "#f0d5e2",
-  };
-
   return (
-    <div style={{ background: C.cream, color: C.black, fontFamily: "'Inter', system-ui, -apple-system, sans-serif", overflowX: "hidden" }}>
+    <div style={{
+      background: "#FEFAF8",
+      color: "#0F0A0D",
+      fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
+      overflowX: "hidden",
+    }}>
 
-      {/* ── Navbar ── */}
+      {/* ── NAV ── */}
       <header style={{
-        position: "sticky", top: 0, zIndex: 50,
-        background: "rgba(255,250,248,0.92)",
-        backdropFilter: "blur(20px)",
-        borderBottom: `1px solid ${C.border}`,
+        position: "sticky",
+        top: 0,
+        zIndex: 100,
+        background: "rgba(254,250,248,0.88)",
+        backdropFilter: "blur(24px)",
+        WebkitBackdropFilter: "blur(24px)",
+        borderBottom: "1px solid #EDCFDE",
       }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px", height: 68, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", color: C.black }}>
+        <div style={{
+          maxWidth: 1280,
+          margin: "0 auto",
+          padding: "0 32px",
+          height: 72,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}>
+          {/* Logo */}
+          <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
             <div style={{
-              width: 38, height: 38, borderRadius: 12,
-              background: `linear-gradient(135deg, ${C.rose}, #e8729a)`,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              boxShadow: `0 4px 12px ${C.rose}40`,
+              width: 40,
+              height: 40,
+              borderRadius: 12,
+              background: "linear-gradient(135deg, #D4437C, #8B1A42)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 4px 14px rgba(212,67,124,0.35)",
             }}>
               <Gem size={18} color="white" />
             </div>
-            <div>
-              <span style={{ fontWeight: 800, fontSize: 18, letterSpacing: "-0.03em", color: C.black }}>Nail</span>
-              <span style={{ fontWeight: 800, fontSize: 18, letterSpacing: "-0.03em", color: C.rose }}>Class</span>
-            </div>
+            <span style={{ fontWeight: 900, fontSize: 20, letterSpacing: "-0.04em", color: "#0F0A0D" }}>
+              Nail<span style={{ color: "#D4437C" }}>✦</span>Class
+            </span>
           </Link>
 
-          <nav style={{ display: "flex", alignItems: "center", gap: 28 }}>
-            <Link href="/courses" style={{ color: C.muted, textDecoration: "none", fontSize: 14, fontWeight: 500 }}>Cursos</Link>
-            <Link href="#sobre" style={{ color: C.muted, textDecoration: "none", fontSize: 14, fontWeight: 500 }}>Sobre</Link>
+          {/* Nav links */}
+          <nav style={{ display: "flex", alignItems: "center", gap: 36 }}>
+            {[["Cursos", "/courses"], ["Sobre", "#sobre"], ["Depoimentos", "#depoimentos"]].map(([label, href]) => (
+              <Link key={href} href={href} style={{
+                color: "#7A5A68",
+                textDecoration: "none",
+                fontSize: 14,
+                fontWeight: 500,
+                letterSpacing: "-0.01em",
+                transition: "color 0.2s",
+              }}
+                onMouseEnter={undefined}
+              >
+                {label}
+              </Link>
+            ))}
           </nav>
 
+          {/* Actions */}
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <Link href="/login" style={{ color: C.muted, textDecoration: "none", fontSize: 14, fontWeight: 500, padding: "8px 16px" }}>
+            <Link href="/login" style={{
+              color: "#7A5A68",
+              textDecoration: "none",
+              fontSize: 14,
+              fontWeight: 500,
+              padding: "9px 18px",
+              borderRadius: 10,
+              border: "1.5px solid #EDCFDE",
+              background: "transparent",
+              transition: "all 0.2s",
+            }}>
               Entrar
             </Link>
             <Link href="/login" style={{
-              display: "inline-flex", alignItems: "center", gap: 6,
-              padding: "9px 20px", borderRadius: 10,
-              background: `linear-gradient(135deg, ${C.rose}, #e8729a)`,
-              color: "white", textDecoration: "none", fontSize: 14, fontWeight: 600,
-              boxShadow: `0 4px 14px ${C.rose}45`,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "10px 22px",
+              borderRadius: 100,
+              background: "linear-gradient(135deg, #D4437C 0%, #8B1A42 100%)",
+              backgroundSize: "200% auto",
+              color: "white",
+              textDecoration: "none",
+              fontSize: 14,
+              fontWeight: 700,
+              letterSpacing: "-0.01em",
+              boxShadow: "0 4px 18px rgba(212,67,124,0.4)",
+              animation: "shimmer 3s linear infinite",
             }}>
-              Começar agora
+              Começar grátis ✦
             </Link>
           </div>
         </div>
       </header>
 
-      {/* ── Hero ── */}
-      <section style={{ position: "relative", padding: "90px 24px 80px", overflow: "hidden" }}>
-        {/* Decorative blobs */}
+      {/* ── HERO ── */}
+      <section style={{
+        background: "#0F0A0D",
+        minHeight: "92vh",
+        display: "flex",
+        alignItems: "center",
+        position: "relative",
+        overflow: "hidden",
+        padding: "80px 32px",
+      }}>
+        {/* Background gradient orbs */}
         <div style={{
-          position: "absolute", top: -100, right: -150, width: 500, height: 500,
+          position: "absolute",
+          top: -200,
+          left: -200,
+          width: 600,
+          height: 600,
           borderRadius: "50%",
-          background: `radial-gradient(circle, ${C.roseLight}80 0%, transparent 70%)`,
-          zIndex: 0,
+          background: "radial-gradient(circle, rgba(212,67,124,0.18) 0%, transparent 70%)",
+          pointerEvents: "none",
         }} />
         <div style={{
-          position: "absolute", bottom: -80, left: -120, width: 400, height: 400,
+          position: "absolute",
+          bottom: -150,
+          right: -100,
+          width: 500,
+          height: 500,
           borderRadius: "50%",
-          background: `radial-gradient(circle, ${C.roseLight}60 0%, transparent 70%)`,
-          zIndex: 0,
+          background: "radial-gradient(circle, rgba(139,26,66,0.22) 0%, transparent 70%)",
+          pointerEvents: "none",
+        }} />
+        <div style={{
+          position: "absolute",
+          top: "30%",
+          left: "38%",
+          width: 300,
+          height: 300,
+          borderRadius: "50%",
+          background: "radial-gradient(circle, rgba(200,169,122,0.08) 0%, transparent 70%)",
+          pointerEvents: "none",
         }} />
 
-        {/* Decorative dots */}
-        <div style={{ position: "absolute", top: 60, left: "8%", width: 6, height: 6, borderRadius: "50%", background: C.rose, opacity: 0.3 }} />
-        <div style={{ position: "absolute", top: 120, left: "12%", width: 4, height: 4, borderRadius: "50%", background: C.gold, opacity: 0.4 }} />
-        <div style={{ position: "absolute", top: 80, right: "10%", width: 5, height: 5, borderRadius: "50%", background: C.rose, opacity: 0.3 }} />
-
-        <div style={{ position: "relative", zIndex: 1, maxWidth: 760, margin: "0 auto", textAlign: "center" }}>
-          {/* Badge */}
-          <div style={{
-            display: "inline-flex", alignItems: "center", gap: 6,
-            padding: "6px 16px", borderRadius: 100,
-            background: C.blush,
-            border: `1px solid ${C.border}`,
-            color: C.rose, fontSize: 13, fontWeight: 600,
-            marginBottom: 28,
-            boxShadow: `0 2px 8px ${C.rose}15`,
-          }}>
-            <Sparkles size={13} />
-            A escola de beleza mais completa do Brasil
-          </div>
-
-          {/* Headline */}
-          <h1 style={{
-            fontSize: "clamp(38px, 6vw, 68px)",
-            fontWeight: 800,
-            letterSpacing: "-0.04em",
-            lineHeight: 1.08,
-            marginBottom: 22,
-            color: C.black,
-          }}>
-            Transforme sua{" "}
-            <span style={{
-              background: `linear-gradient(135deg, ${C.rose}, #e0567a, #e8729a)`,
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
+        <div style={{
+          maxWidth: 1280,
+          margin: "0 auto",
+          width: "100%",
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: 80,
+          alignItems: "center",
+          position: "relative",
+          zIndex: 1,
+        }}>
+          {/* LEFT — Text */}
+          <div>
+            {/* Badge */}
+            <div style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "8px 18px",
+              borderRadius: 100,
+              background: "rgba(212,67,124,0.12)",
+              border: "1px solid rgba(212,67,124,0.3)",
+              color: "#F9E8F0",
+              fontSize: 13,
+              fontWeight: 600,
+              marginBottom: 32,
+              letterSpacing: "0.02em",
             }}>
-              paixão por unhas
-            </span>
-            <br />em uma carreira de sucesso
-          </h1>
+              <span style={{ color: "#D4437C" }}>✦</span>
+              A escola de unhas mais completa
+            </div>
 
-          <p style={{
-            fontSize: 17, color: C.muted, maxWidth: 520, margin: "0 auto 36px",
-            lineHeight: 1.7, letterSpacing: "-0.01em"
-          }}>
-            Aprenda nail art, gel, esmaltação em gel, manicure e muito mais com professoras especialistas.
-            Do iniciante ao avançado — do seu jeito, no seu tempo.
-          </p>
+            {/* Headline */}
+            <h1 style={{
+              fontSize: "clamp(52px, 6vw, 88px)",
+              fontWeight: 900,
+              letterSpacing: "-0.05em",
+              lineHeight: 1.0,
+              color: "#FEFAF8",
+              marginBottom: 28,
+            }}>
+              Aprenda a arte<br />
+              das unhas.{" "}
+              <span style={{
+                background: "linear-gradient(135deg, #D4437C, #C8A97A)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+              }}>
+                Do zero ao
+              </span>
+              <br />
+              <span style={{
+                background: "linear-gradient(135deg, #C8A97A, #D4437C)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+              }}>
+                profissional.
+              </span>
+            </h1>
 
-          <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", marginBottom: 48 }}>
-            <Link href="/courses" style={{
-              display: "inline-flex", alignItems: "center", gap: 8,
-              padding: "14px 30px", borderRadius: 12,
-              background: `linear-gradient(135deg, ${C.rose}, #e8729a)`,
-              color: "white", textDecoration: "none", fontSize: 15, fontWeight: 700,
-              boxShadow: `0 8px 24px ${C.rose}40`,
+            <p style={{
+              fontSize: 17,
+              color: "rgba(254,250,248,0.55)",
+              lineHeight: 1.75,
+              marginBottom: 44,
+              maxWidth: 480,
               letterSpacing: "-0.01em",
             }}>
-              <Play size={17} fill="white" />
-              Ver todos os cursos
-            </Link>
-            <Link href="/login" style={{
-              display: "inline-flex", alignItems: "center", gap: 8,
-              padding: "14px 28px", borderRadius: 12,
-              border: `1.5px solid ${C.border}`,
-              background: "white",
-              color: C.charcoal, textDecoration: "none", fontSize: 15, fontWeight: 600,
-              boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-            }}>
-              Criar minha conta
-              <ArrowRight size={16} color={C.rose} />
-            </Link>
+              Domine técnicas de nail art, gel UV, acrílico e muito mais.
+              Aulas em HD, lives ao vivo, certificado incluso.
+            </p>
+
+            {/* CTAs */}
+            <div style={{ display: "flex", gap: 14, alignItems: "center", marginBottom: 52, flexWrap: "wrap" }}>
+              <Link href="/courses" style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 10,
+                padding: "16px 36px",
+                borderRadius: 100,
+                background: "linear-gradient(135deg, #D4437C 0%, #8B1A42 100%)",
+                backgroundSize: "200% auto",
+                color: "white",
+                textDecoration: "none",
+                fontSize: 15,
+                fontWeight: 700,
+                letterSpacing: "-0.01em",
+                boxShadow: "0 8px 32px rgba(212,67,124,0.45)",
+                animation: "shimmer 3s linear infinite",
+              }}>
+                <Play size={16} fill="white" />
+                Explorar cursos
+              </Link>
+              <Link href="/login" style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "16px 32px",
+                borderRadius: 100,
+                border: "1.5px solid rgba(254,250,248,0.15)",
+                background: "rgba(254,250,248,0.05)",
+                color: "#FEFAF8",
+                textDecoration: "none",
+                fontSize: 15,
+                fontWeight: 600,
+                backdropFilter: "blur(8px)",
+              }}>
+                Criar conta grátis
+                <ArrowRight size={16} />
+              </Link>
+            </div>
+
+            {/* Trust indicators */}
+            <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
+              {/* Avatars */}
+              <div style={{ display: "flex" }}>
+                {["#D4437C", "#C8A97A", "#8B1A42", "#e8729a", "#b55a8a"].map((bg, i) => (
+                  <div key={i} style={{
+                    width: 38,
+                    height: 38,
+                    borderRadius: "50%",
+                    background: `linear-gradient(135deg, ${bg}, ${bg}99)`,
+                    border: "2.5px solid #0F0A0D",
+                    marginLeft: i === 0 ? 0 : -12,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: "white",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+                    position: "relative",
+                    zIndex: 5 - i,
+                  }}>
+                    {["M","J","P","A","L"][i]}
+                  </div>
+                ))}
+              </div>
+              <div>
+                <div style={{ display: "flex", gap: 2, marginBottom: 4 }}>
+                  {[...Array(5)].map((_, i) => <Star key={i} size={13} color="#C8A97A" fill="#C8A97A" />)}
+                </div>
+                <span style={{ fontSize: 13, color: "rgba(254,250,248,0.5)", letterSpacing: "-0.01em" }}>
+                  <strong style={{ color: "#FEFAF8", fontWeight: 700 }}>+2.400 alunas</strong> já aprenderam
+                </span>
+              </div>
+            </div>
           </div>
 
-          {/* Social proof */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 14, flexWrap: "wrap" }}>
-            <div style={{ display: "flex" }}>
-              {["#f9a8c9","#f472a8","#e91e8c","#c9476e","#a8375a"].map((bg, i) => (
-                <div key={i} style={{
-                  width: 34, height: 34, borderRadius: "50%",
-                  background: `linear-gradient(135deg, ${bg}, ${bg}cc)`,
-                  border: "2.5px solid white",
-                  marginLeft: i === 0 ? 0 : -10,
-                  boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 12, fontWeight: 700, color: "white"
-                }}>
-                  {["A","B","C","D","E"][i]}
-                </div>
-              ))}
-            </div>
-            <div>
-              <div style={{ display: "flex", gap: 2, marginBottom: 2 }}>
-                {[...Array(5)].map((_, i) => <Star key={i} size={14} color="#f59e0b" fill="#f59e0b" />)}
+          {/* RIGHT — floating cards */}
+          <div style={{ position: "relative", height: 540, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            {/* Card 1 — background */}
+            <div style={{
+              position: "absolute",
+              top: 20,
+              right: -20,
+              width: 260,
+              borderRadius: 24,
+              background: "rgba(212,67,124,0.08)",
+              border: "1px solid rgba(212,67,124,0.2)",
+              padding: "20px",
+              backdropFilter: "blur(12px)",
+              transform: "rotate(4deg)",
+              animation: "float 6s ease-in-out infinite",
+              animationDelay: "1s",
+            }}>
+              <div style={{
+                height: 130,
+                borderRadius: 14,
+                background: "linear-gradient(135deg, #8B1A42, #D4437C)",
+                marginBottom: 14,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                position: "relative",
+                overflow: "hidden",
+              }}>
+                <div style={{ position: "absolute", top: -20, right: -20, width: 80, height: 80, borderRadius: "50%", background: "rgba(255,255,255,0.1)" }} />
+                <Award size={36} color="rgba(255,255,255,0.9)" />
               </div>
-              <span style={{ fontSize: 13, color: C.muted }}>
-                <strong style={{ color: C.black }}>+2.400 alunas</strong> já transformaram suas vidas
-              </span>
+              <div style={{ fontSize: 14, fontWeight: 700, color: "#FEFAF8", marginBottom: 4 }}>Nail Art Avançado</div>
+              <div style={{ fontSize: 12, color: "rgba(254,250,248,0.5)" }}>18 módulos · 96 aulas</div>
+            </div>
+
+            {/* Card 2 — center, main */}
+            <div style={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: 280,
+              borderRadius: 28,
+              background: "rgba(254,250,248,0.06)",
+              border: "1px solid rgba(212,67,124,0.25)",
+              padding: "24px",
+              backdropFilter: "blur(20px)",
+              animation: "float 6s ease-in-out infinite",
+              zIndex: 2,
+            }}>
+              <div style={{
+                height: 150,
+                borderRadius: 18,
+                background: "linear-gradient(135deg, #D4437C 0%, #8B1A42 50%, #C8A97A 100%)",
+                marginBottom: 18,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                position: "relative",
+                overflow: "hidden",
+              }}>
+                <div style={{ position: "absolute", top: -30, right: -30, width: 100, height: 100, borderRadius: "50%", background: "rgba(255,255,255,0.08)" }} />
+                <div style={{ position: "absolute", bottom: -20, left: -20, width: 80, height: 80, borderRadius: "50%", background: "rgba(0,0,0,0.1)" }} />
+                <div style={{
+                  width: 52,
+                  height: 52,
+                  borderRadius: "50%",
+                  background: "rgba(255,255,255,0.25)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  border: "2px solid rgba(255,255,255,0.4)",
+                }}>
+                  <Play size={22} fill="white" color="white" />
+                </div>
+              </div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: "#FEFAF8", marginBottom: 6, letterSpacing: "-0.02em" }}>
+                Gel UV Profissional
+              </div>
+              <div style={{ fontSize: 12, color: "rgba(254,250,248,0.5)", marginBottom: 14 }}>12 módulos · 64 aulas</div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div style={{ display: "flex", gap: 2 }}>
+                  {[...Array(5)].map((_, i) => <Star key={i} size={11} color="#C8A97A" fill="#C8A97A" />)}
+                </div>
+                <div style={{
+                  padding: "4px 12px",
+                  borderRadius: 100,
+                  background: "rgba(212,67,124,0.2)",
+                  border: "1px solid rgba(212,67,124,0.3)",
+                  color: "#F9E8F0",
+                  fontSize: 12,
+                  fontWeight: 700,
+                }}>
+                  Destaque
+                </div>
+              </div>
+            </div>
+
+            {/* Card 3 — bottom left */}
+            <div style={{
+              position: "absolute",
+              bottom: 30,
+              left: -10,
+              width: 240,
+              borderRadius: 20,
+              background: "rgba(200,169,122,0.08)",
+              border: "1px solid rgba(200,169,122,0.2)",
+              padding: "18px",
+              backdropFilter: "blur(12px)",
+              transform: "rotate(-3deg)",
+              animation: "float 6s ease-in-out infinite",
+              animationDelay: "2s",
+            }}>
+              <div style={{
+                height: 110,
+                borderRadius: 12,
+                background: "linear-gradient(135deg, rgba(200,169,122,0.3), rgba(212,67,124,0.2))",
+                marginBottom: 12,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                border: "1px solid rgba(200,169,122,0.15)",
+              }}>
+                <Sparkles size={28} color="#C8A97A" />
+              </div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#FEFAF8", marginBottom: 3 }}>Decoração & Nail Art</div>
+              <div style={{ fontSize: 11, color: "rgba(254,250,248,0.45)" }}>8 módulos · 42 aulas</div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── Stats ── */}
-      <section style={{ padding: "0 24px 70px" }}>
+      {/* ── MARQUEE STRIP ── */}
+      <div style={{
+        background: "#D4437C",
+        overflow: "hidden",
+        padding: "16px 0",
+        borderTop: "1px solid #8B1A42",
+        borderBottom: "1px solid #8B1A42",
+      }}>
         <div style={{
-          maxWidth: 900, margin: "0 auto",
-          display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-          gap: 16,
+          display: "flex",
+          width: "max-content",
+          animation: "marquee 28s linear infinite",
         }}>
-          {[
-            { value: "50+", label: "Cursos disponíveis", icon: BookOpen, color: C.rose },
-            { value: "2.4k+", label: "Alunas ativas", icon: Users, color: "#e8729a" },
-            { value: "100h+", label: "De conteúdo", icon: Clock, color: C.gold },
-            { value: "98%", label: "Recomendam", icon: Heart, color: "#e05595" },
-          ].map(({ value, label, icon: Icon, color }) => (
-            <div key={label} style={{
-              padding: "24px 20px",
-              borderRadius: 18,
-              background: "white",
-              border: `1px solid ${C.border}`,
-              textAlign: "center",
-              boxShadow: "0 2px 12px rgba(201,71,110,0.06)",
+          {[1, 2].map((n) => (
+            <div key={n} style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 0,
+              whiteSpace: "nowrap",
+              paddingRight: 0,
             }}>
-              <div style={{
-                width: 40, height: 40, borderRadius: 10,
-                background: `${color}18`,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                margin: "0 auto 12px",
-              }}>
-                <Icon size={18} color={color} />
-              </div>
-              <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: "-0.04em", color: C.black }}>{value}</div>
-              <div style={{ fontSize: 13, color: C.muted, marginTop: 4 }}>{label}</div>
+              {["Nail Art", "Gel UV", "Esmaltação em Gel", "Unhas Acrílicas", "Alongamento", "Nail Design", "French", "Baby Boomer", "Decoração"].map((item, i) => (
+                <span key={i} style={{
+                  fontSize: 14,
+                  fontWeight: 700,
+                  color: "rgba(255,255,255,0.92)",
+                  letterSpacing: "0.05em",
+                  textTransform: "uppercase",
+                  padding: "0 28px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 28,
+                }}>
+                  {item}
+                  <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 8 }}>◆</span>
+                </span>
+              ))}
             </div>
           ))}
         </div>
-      </section>
+      </div>
 
-      {/* ── Features ── */}
-      <section id="sobre" style={{ padding: "70px 24px", background: "white" }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: 56 }}>
+      {/* ── FEATURES ── */}
+      <section id="sobre" style={{ background: "white", padding: "120px 32px" }}>
+        <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+
+          {/* Section heading */}
+          <div style={{ textAlign: "center", marginBottom: 100 }}>
             <div style={{
-              display: "inline-flex", alignItems: "center", gap: 6,
-              padding: "5px 14px", borderRadius: 100,
-              background: C.blush, border: `1px solid ${C.border}`,
-              color: C.rose, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em",
-              marginBottom: 16,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "6px 18px",
+              borderRadius: 100,
+              background: "#F9E8F0",
+              border: "1px solid #EDCFDE",
+              color: "#D4437C",
+              fontSize: 12,
+              fontWeight: 700,
+              textTransform: "uppercase",
+              letterSpacing: "0.12em",
+              marginBottom: 20,
             }}>
-              Por que nos escolher
+              Por que a NailClass
             </div>
-            <h2 style={{ fontSize: "clamp(26px, 4vw, 40px)", fontWeight: 800, letterSpacing: "-0.03em", color: C.black, marginBottom: 12 }}>
-              Tudo que você precisa para<br />se tornar uma profissional
+            <h2 style={{
+              fontSize: "clamp(32px, 4vw, 52px)",
+              fontWeight: 900,
+              letterSpacing: "-0.04em",
+              color: "#0F0A0D",
+              lineHeight: 1.08,
+            }}>
+              Tudo que você precisa para<br />se tornar profissional
             </h2>
-            <p style={{ color: C.muted, fontSize: 16, maxWidth: 500, margin: "0 auto" }}>
-              Uma plataforma pensada especialmente para profissionais da beleza.
-            </p>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 20 }}>
-            {[
-              {
-                icon: Palette,
-                iconBg: `linear-gradient(135deg, ${C.rose}, #e8729a)`,
-                title: "Técnicas exclusivas",
-                desc: "Aprenda nail art, gel, fibra de vidro, acrílico e muito mais. Conteúdo atualizado com as últimas tendências do mercado.",
-              },
-              {
-                icon: Play,
-                iconBg: "linear-gradient(135deg, #e8729a, #f0a0c0)",
-                title: "Vídeos em alta qualidade",
-                desc: "Aulas gravadas em HD com close das técnicas. Pause, volte e assista quantas vezes quiser — sem pressa.",
-              },
-              {
-                icon: Heart,
-                iconBg: `linear-gradient(135deg, ${C.gold}, #e0c060)`,
-                title: "Lives ao vivo",
-                desc: "Participe de aulas ao vivo direto pelo navegador. Tire dúvidas em tempo real com a professora.",
-              },
-              {
-                icon: Award,
-                iconBg: "linear-gradient(135deg, #a8375a, #c9476e)",
-                title: "Certificado de conclusão",
-                desc: "Receba seu certificado ao completar o curso. Valorize seu currículo e comprove sua qualificação.",
-              },
-              {
-                icon: Gem,
-                iconBg: "linear-gradient(135deg, #8e5a8e, #b57ab5)",
-                title: "Do básico ao avançado",
-                desc: "Trilhas completas para quem está começando e para profissionais que querem se especializar ainda mais.",
-              },
-              {
-                icon: Users,
-                iconBg: "linear-gradient(135deg, #c96090, #e890b0)",
-                title: "Comunidade exclusiva",
-                desc: "Faça parte de uma comunidade de profissionais apaixonadas por beleza. Troque experiências e inspire-se.",
-              },
-            ].map(({ icon: Icon, iconBg, title, desc }) => (
-              <div key={title} style={{
-                padding: "28px",
-                borderRadius: 20,
-                border: `1px solid ${C.border}`,
-                background: C.cream,
-                transition: "transform 0.2s, box-shadow 0.2s",
+          {/* Row 1 — Video HD */}
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: 80,
+            alignItems: "center",
+            marginBottom: 120,
+          }}>
+            <div style={{ paddingRight: 40 }}>
+              <div style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                fontSize: 12,
+                fontWeight: 700,
+                color: "#D4437C",
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                marginBottom: 20,
+                background: "#F9E8F0",
+                padding: "5px 14px",
+                borderRadius: 100,
+                border: "1px solid #EDCFDE",
+              }}>
+                01 — Conteúdo
+              </div>
+              <h3 style={{
+                fontSize: "clamp(28px, 3vw, 44px)",
+                fontWeight: 900,
+                letterSpacing: "-0.04em",
+                color: "#0F0A0D",
+                lineHeight: 1.1,
+                marginBottom: 24,
+              }}>
+                Vídeos em HD com<br />close das técnicas
+              </h3>
+              <p style={{
+                fontSize: 16,
+                color: "#7A5A68",
+                lineHeight: 1.8,
+                marginBottom: 36,
+                maxWidth: 420,
+              }}>
+                Cada detalhe das técnicas gravado em alta definição com câmera de close. Pause, volte e assista quantas vezes precisar — sem pressa, no seu ritmo.
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                {["Qualidade 4K em todos os vídeos", "Close detalhado das técnicas", "Acesso vitalício ao conteúdo"].map((item) => (
+                  <div key={item} style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <div style={{
+                      width: 22,
+                      height: 22,
+                      borderRadius: "50%",
+                      background: "linear-gradient(135deg, #D4437C, #8B1A42)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                    }}>
+                      <CheckCircle size={12} color="white" />
+                    </div>
+                    <span style={{ fontSize: 14, color: "#0F0A0D", fontWeight: 500 }}>{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div style={{ position: "relative" }}>
+              <div style={{
+                borderRadius: 28,
+                background: "linear-gradient(135deg, #D4437C 0%, #8B1A42 50%, #C8A97A 100%)",
+                padding: "48px 40px",
+                aspectRatio: "4/3",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                position: "relative",
+                overflow: "hidden",
+                boxShadow: "0 32px 80px rgba(212,67,124,0.3)",
+              }}>
+                <div style={{ position: "absolute", top: -40, right: -40, width: 200, height: 200, borderRadius: "50%", background: "rgba(255,255,255,0.07)" }} />
+                <div style={{ position: "absolute", bottom: -30, left: -30, width: 150, height: 150, borderRadius: "50%", background: "rgba(0,0,0,0.1)" }} />
+                <div style={{ position: "absolute", top: 20, left: 20, display: "flex", gap: 6 }}>
+                  {["rgba(255,255,255,0.3)", "rgba(255,255,255,0.2)", "rgba(255,255,255,0.15)"].map((bg, i) => (
+                    <div key={i} style={{ width: 10, height: 10, borderRadius: "50%", background: bg }} />
+                  ))}
+                </div>
+                <div style={{
+                  width: 80,
+                  height: 80,
+                  borderRadius: "50%",
+                  background: "rgba(255,255,255,0.2)",
+                  border: "2px solid rgba(255,255,255,0.4)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  position: "relative",
+                  zIndex: 1,
+                }}>
+                  <Play size={32} fill="white" color="white" />
+                </div>
+                {/* Sparkle decorations */}
+                <div style={{ position: "absolute", top: 40, right: 30, color: "rgba(255,255,255,0.6)", fontSize: 20 }}>✦</div>
+                <div style={{ position: "absolute", bottom: 50, right: 50, color: "rgba(255,255,255,0.3)", fontSize: 12 }}>✦</div>
+                <div style={{ position: "absolute", bottom: 30, left: 40, color: "rgba(200,169,122,0.7)", fontSize: 16 }}>✦</div>
+              </div>
+              {/* Floating stat card */}
+              <div style={{
+                position: "absolute",
+                bottom: -24,
+                left: -28,
+                background: "white",
+                borderRadius: 18,
+                padding: "16px 20px",
+                boxShadow: "0 12px 40px rgba(0,0,0,0.12)",
+                border: "1px solid #EDCFDE",
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
               }}>
                 <div style={{
-                  width: 50, height: 50, borderRadius: 14,
-                  background: iconBg,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  marginBottom: 18,
-                  boxShadow: `0 6px 16px ${C.rose}30`,
+                  width: 44,
+                  height: 44,
+                  borderRadius: 12,
+                  background: "linear-gradient(135deg, #D4437C, #8B1A42)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}>
-                  <Icon size={22} color="white" />
+                  <BookOpen size={20} color="white" />
                 </div>
-                <h3 style={{ fontSize: 17, fontWeight: 700, color: C.black, marginBottom: 10, letterSpacing: "-0.02em" }}>{title}</h3>
-                <p style={{ fontSize: 14, color: C.muted, lineHeight: 1.65 }}>{desc}</p>
+                <div>
+                  <div style={{ fontSize: 20, fontWeight: 900, color: "#0F0A0D", letterSpacing: "-0.03em" }}>100h+</div>
+                  <div style={{ fontSize: 12, color: "#7A5A68" }}>De conteúdo</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Row 2 — Lives (reversed) */}
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: 80,
+            alignItems: "center",
+            marginBottom: 100,
+          }}>
+            {/* Visual left */}
+            <div style={{ position: "relative" }}>
+              <div style={{
+                borderRadius: 28,
+                background: "#0F0A0D",
+                padding: "32px",
+                aspectRatio: "4/3",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                position: "relative",
+                overflow: "hidden",
+                boxShadow: "0 32px 80px rgba(15,10,13,0.4)",
+                border: "1px solid rgba(212,67,124,0.2)",
+              }}>
+                {/* Mock live UI */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#D4437C", boxShadow: "0 0 8px #D4437C" }} />
+                    <span style={{ fontSize: 12, color: "#D4437C", fontWeight: 700, letterSpacing: "0.08em" }}>AO VIVO</span>
+                  </div>
+                  <div style={{ fontSize: 11, color: "rgba(254,250,248,0.4)" }}>124 assistindo</div>
+                </div>
+                <div style={{ display: "flex", gap: 3 }}>
+                  {[40, 65, 45, 80, 55, 70, 48, 62].map((h, i) => (
+                    <div key={i} style={{
+                      width: 8,
+                      height: h,
+                      borderRadius: 4,
+                      background: i % 2 === 0
+                        ? "linear-gradient(to top, #D4437C, #8B1A42)"
+                        : "rgba(212,67,124,0.2)",
+                    }} />
+                  ))}
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: "50%",
+                    background: "linear-gradient(135deg, #D4437C, #8B1A42)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 14,
+                    fontWeight: 700,
+                    color: "white",
+                  }}>
+                    P
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "#FEFAF8" }}>Prof. Patrícia Lima</div>
+                    <div style={{ fontSize: 11, color: "rgba(254,250,248,0.4)" }}>Técnica Baby Boomer</div>
+                  </div>
+                </div>
+                {/* Glow */}
+                <div style={{
+                  position: "absolute",
+                  bottom: -60,
+                  right: -60,
+                  width: 200,
+                  height: 200,
+                  borderRadius: "50%",
+                  background: "radial-gradient(circle, rgba(212,67,124,0.15) 0%, transparent 70%)",
+                }} />
+              </div>
+              {/* Badge */}
+              <div style={{
+                position: "absolute",
+                top: -20,
+                right: -20,
+                background: "linear-gradient(135deg, #D4437C, #8B1A42)",
+                borderRadius: 16,
+                padding: "12px 18px",
+                boxShadow: "0 8px 24px rgba(212,67,124,0.4)",
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+              }}>
+                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "white", boxShadow: "0 0 6px white" }} />
+                <span style={{ fontSize: 12, fontWeight: 700, color: "white", letterSpacing: "0.06em" }}>LIVE HOJE</span>
+              </div>
+            </div>
+
+            {/* Text right */}
+            <div style={{ paddingLeft: 40 }}>
+              <div style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                fontSize: 12,
+                fontWeight: 700,
+                color: "#D4437C",
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                marginBottom: 20,
+                background: "#F9E8F0",
+                padding: "5px 14px",
+                borderRadius: 100,
+                border: "1px solid #EDCFDE",
+              }}>
+                02 — Interativo
+              </div>
+              <h3 style={{
+                fontSize: "clamp(28px, 3vw, 44px)",
+                fontWeight: 900,
+                letterSpacing: "-0.04em",
+                color: "#0F0A0D",
+                lineHeight: 1.1,
+                marginBottom: 24,
+              }}>
+                Lives ao vivo,<br />direto do navegador
+              </h3>
+              <p style={{
+                fontSize: 16,
+                color: "#7A5A68",
+                lineHeight: 1.8,
+                marginBottom: 36,
+                maxWidth: 420,
+              }}>
+                Participe de aulas ao vivo com as professoras, tire dúvidas em tempo real e aprenda de qualquer dispositivo, sem instalar nada.
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                {["Dúvidas respondidas em tempo real", "Gravação disponível após a live", "Calendário de lives semanais"].map((item) => (
+                  <div key={item} style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <div style={{
+                      width: 22,
+                      height: 22,
+                      borderRadius: "50%",
+                      background: "linear-gradient(135deg, #D4437C, #8B1A42)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                    }}>
+                      <CheckCircle size={12} color="white" />
+                    </div>
+                    <span style={{ fontSize: 14, color: "#0F0A0D", fontWeight: 500 }}>{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Row 3 — Stats */}
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(4, 1fr)",
+            gap: 2,
+            borderRadius: 28,
+            overflow: "hidden",
+            border: "1px solid #EDCFDE",
+          }}>
+            {[
+              { value: "50+", label: "Cursos", icon: BookOpen, desc: "disponíveis agora" },
+              { value: "2.4k", label: "Alunas", icon: Users, desc: "já aprenderam" },
+              { value: "100h", label: "Conteúdo", icon: Clock, desc: "de aulas em vídeo" },
+              { value: "98%", label: "Satisfação", icon: Heart, desc: "recomendam" },
+            ].map(({ value, label, icon: Icon, desc }, i) => (
+              <div key={label} style={{
+                padding: "48px 32px",
+                background: i % 2 === 0 ? "#FEFAF8" : "white",
+                textAlign: "center",
+                borderRight: i < 3 ? "1px solid #EDCFDE" : "none",
+              }}>
+                <div style={{
+                  width: 52,
+                  height: 52,
+                  borderRadius: 16,
+                  background: "linear-gradient(135deg, #F9E8F0, #EDCFDE)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  margin: "0 auto 20px",
+                }}>
+                  <Icon size={22} color="#D4437C" />
+                </div>
+                <div style={{
+                  fontSize: 52,
+                  fontWeight: 900,
+                  letterSpacing: "-0.05em",
+                  color: "#0F0A0D",
+                  lineHeight: 1,
+                  marginBottom: 8,
+                }}>
+                  {value}
+                </div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: "#0F0A0D", marginBottom: 4 }}>{label}</div>
+                <div style={{ fontSize: 13, color: "#7A5A68" }}>{desc}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── Courses ── */}
-      {Array.isArray(courses) && courses.length > 0 && (
-        <section style={{ padding: "70px 24px", background: C.blush }}>
-          <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-            <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 40, flexWrap: "wrap", gap: 12 }}>
-              <div>
-                <div style={{
-                  display: "inline-flex", alignItems: "center", gap: 6,
-                  padding: "4px 12px", borderRadius: 100,
-                  background: "white", border: `1px solid ${C.border}`,
-                  color: C.rose, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em",
-                  marginBottom: 12,
-                }}>
-                  Destaques
-                </div>
-                <h2 style={{ fontSize: "clamp(24px, 3.5vw, 36px)", fontWeight: 800, letterSpacing: "-0.03em", color: C.black }}>
-                  Cursos em destaque
-                </h2>
-              </div>
-              <Link href="/courses" style={{
-                display: "inline-flex", alignItems: "center", gap: 6,
-                color: C.rose, textDecoration: "none", fontSize: 14, fontWeight: 600,
-                padding: "8px 16px", borderRadius: 10,
-                border: `1.5px solid ${C.rose}`,
-                background: "white",
+      {/* ── COURSES ── */}
+      <section style={{ background: "#FEFAF8", padding: "120px 32px" }}>
+        <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+          {/* Heading row */}
+          <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 56, flexWrap: "wrap", gap: 16 }}>
+            <div>
+              <div style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "6px 16px",
+                borderRadius: 100,
+                background: "#F9E8F0",
+                border: "1px solid #EDCFDE",
+                color: "#D4437C",
+                fontSize: 12,
+                fontWeight: 700,
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                marginBottom: 16,
               }}>
-                Ver todos <ChevronRight size={16} />
-              </Link>
+                Destaques
+              </div>
+              <h2 style={{
+                fontSize: "clamp(28px, 4vw, 48px)",
+                fontWeight: 900,
+                letterSpacing: "-0.04em",
+                color: "#0F0A0D",
+                lineHeight: 1.05,
+              }}>
+                Cursos em destaque
+              </h2>
             </div>
+            <Link href="/courses" style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              color: "#D4437C",
+              textDecoration: "none",
+              fontSize: 14,
+              fontWeight: 700,
+              letterSpacing: "-0.01em",
+              padding: "10px 20px",
+              borderRadius: 100,
+              border: "1.5px solid #D4437C",
+              background: "transparent",
+              transition: "all 0.2s",
+            }}>
+              Ver todos <ArrowRight size={15} />
+            </Link>
+          </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 20 }}>
+          {/* Course grid */}
+          {Array.isArray(courses) && courses.length > 0 ? (
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(3, 1fr)",
+              gap: 24,
+            }}>
               {courses.slice(0, 6).map((course: {
-                id: string; title: string; thumbnailUrl?: string; level?: string;
-                shortDescription?: string; totalLessons: number; totalModules: number;
-                isForSale: boolean; price?: number; currency: string;
+                id: string;
+                title: string;
+                thumbnailUrl?: string;
+                level?: string;
+                shortDescription?: string;
+                totalLessons: number;
+                totalModules: number;
+                isForSale: boolean;
+                price?: number;
+                currency: string;
               }) => (
                 <Link key={course.id} href={`/courses/${course.id}`} style={{ textDecoration: "none", color: "inherit" }}>
                   <div style={{
-                    borderRadius: 20, background: "white",
-                    border: `1px solid ${C.border}`,
+                    borderRadius: 24,
+                    background: "white",
+                    border: "1px solid #EDCFDE",
                     overflow: "hidden",
-                    boxShadow: "0 4px 16px rgba(201,71,110,0.07)",
-                    display: "flex", flexDirection: "column", height: "100%",
-                    transition: "transform 0.2s, box-shadow 0.2s",
-                  }}>
-                    <div style={{ aspectRatio: "16/9", position: "relative", overflow: "hidden", background: `linear-gradient(135deg, ${C.roseLight}, ${C.blush})` }}>
+                    display: "flex",
+                    flexDirection: "column",
+                    height: "100%",
+                    transition: "transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease",
+                    boxShadow: "0 4px 20px rgba(212,67,124,0.06)",
+                  }}
+                    onMouseEnter={e => {
+                      (e.currentTarget as HTMLElement).style.transform = "translateY(-6px)";
+                      (e.currentTarget as HTMLElement).style.boxShadow = "0 20px 60px rgba(212,67,124,0.18)";
+                      (e.currentTarget as HTMLElement).style.borderColor = "#D4437C";
+                    }}
+                    onMouseLeave={e => {
+                      (e.currentTarget as HTMLElement).style.transform = "translateY(0)";
+                      (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 20px rgba(212,67,124,0.06)";
+                      (e.currentTarget as HTMLElement).style.borderColor = "#EDCFDE";
+                    }}
+                  >
+                    {/* Thumbnail */}
+                    <div style={{
+                      aspectRatio: "16/9",
+                      position: "relative",
+                      overflow: "hidden",
+                      background: "linear-gradient(135deg, #F9E8F0, #EDCFDE)",
+                    }}>
                       {course.thumbnailUrl ? (
-                        <img src={course.thumbnailUrl} alt={course.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        <img
+                          src={course.thumbnailUrl}
+                          alt={course.title}
+                          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                        />
                       ) : (
-                        <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                          <Gem size={48} color={`${C.rose}40`} />
+                        <div style={{
+                          width: "100%",
+                          height: "100%",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          background: "linear-gradient(135deg, #D4437C 0%, #8B1A42 60%, #C8A97A 100%)",
+                          position: "relative",
+                          overflow: "hidden",
+                        }}>
+                          <div style={{ position: "absolute", top: -20, right: -20, width: 80, height: 80, borderRadius: "50%", background: "rgba(255,255,255,0.08)" }} />
+                          <Gem size={42} color="rgba(255,255,255,0.5)" />
                         </div>
                       )}
                       {course.level && (
                         <div style={{
-                          position: "absolute", top: 12, left: 12,
-                          padding: "3px 10px", borderRadius: 100,
-                          background: "rgba(255,255,255,0.9)", backdropFilter: "blur(8px)",
-                          color: C.rose, fontSize: 11, fontWeight: 700,
-                          border: `1px solid ${C.border}`,
+                          position: "absolute",
+                          top: 12,
+                          left: 12,
+                          padding: "4px 12px",
+                          borderRadius: 100,
+                          background: "rgba(15,10,13,0.7)",
+                          backdropFilter: "blur(8px)",
+                          color: "#F9E8F0",
+                          fontSize: 11,
+                          fontWeight: 700,
+                          letterSpacing: "0.06em",
+                          border: "1px solid rgba(212,67,124,0.3)",
                         }}>
                           {course.level}
                         </div>
                       )}
                     </div>
-                    <div style={{ padding: "20px", flex: 1, display: "flex", flexDirection: "column" }}>
-                      <h3 style={{ fontSize: 15, fontWeight: 700, color: C.black, marginBottom: 8, letterSpacing: "-0.02em", lineHeight: 1.4 }}>
+
+                    {/* Content */}
+                    <div style={{ padding: "22px 24px", flex: 1, display: "flex", flexDirection: "column" }}>
+                      <h3 style={{
+                        fontSize: 16,
+                        fontWeight: 800,
+                        color: "#0F0A0D",
+                        marginBottom: 8,
+                        letterSpacing: "-0.03em",
+                        lineHeight: 1.3,
+                      }}>
                         {course.title}
                       </h3>
                       {course.shortDescription && (
-                        <p style={{ fontSize: 13, color: C.muted, lineHeight: 1.6, marginBottom: 16, flex: 1 }}>
+                        <p style={{
+                          fontSize: 13,
+                          color: "#7A5A68",
+                          lineHeight: 1.65,
+                          marginBottom: 20,
+                          flex: 1,
+                        }}>
                           {course.shortDescription}
                         </p>
                       )}
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: 14, borderTop: `1px solid ${C.border}` }}>
-                        <span style={{ fontSize: 12, color: C.muted }}>
+                      <div style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        paddingTop: 16,
+                        borderTop: "1px solid #EDCFDE",
+                        marginTop: "auto",
+                      }}>
+                        <span style={{ fontSize: 12, color: "#7A5A68" }}>
                           {course.totalModules} módulos · {course.totalLessons} aulas
                         </span>
                         <span style={{
-                          fontSize: 14, fontWeight: 800, color: "white",
-                          padding: "4px 12px", borderRadius: 8,
+                          fontSize: 14,
+                          fontWeight: 800,
+                          color: "white",
+                          padding: "5px 14px",
+                          borderRadius: 100,
                           background: course.isForSale && course.price
-                            ? `linear-gradient(135deg, ${C.rose}, #e8729a)`
+                            ? "linear-gradient(135deg, #D4437C, #8B1A42)"
                             : "linear-gradient(135deg, #22c55e, #16a34a)",
+                          letterSpacing: "-0.01em",
                         }}>
                           {course.isForSale && course.price
                             ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: course.currency || "BRL" }).format(course.price)
@@ -418,200 +1059,365 @@ export default async function LandingPage() {
                 </Link>
               ))}
             </div>
-          </div>
-        </section>
-      )}
-
-      {/* ── Checklist ── */}
-      <section style={{ padding: "70px 24px", background: "white" }}>
-        <div style={{ maxWidth: 980, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(380px, 1fr))", gap: 56, alignItems: "center" }}>
-          <div>
-            <div style={{
-              display: "inline-block", fontSize: 12, color: C.rose, fontWeight: 700,
-              textTransform: "uppercase", letterSpacing: "0.1em",
-              padding: "5px 14px", borderRadius: 100,
-              background: C.blush, border: `1px solid ${C.border}`,
-              marginBottom: 20,
-            }}>
-              Vantagens exclusivas
-            </div>
-            <h2 style={{ fontSize: "clamp(24px, 3.5vw, 36px)", fontWeight: 800, letterSpacing: "-0.03em", color: C.black, marginBottom: 14 }}>
-              A plataforma certa para<br />quem quer crescer
-            </h2>
-            <p style={{ color: C.muted, lineHeight: 1.7, fontSize: 15, marginBottom: 28 }}>
-              Criada especialmente para profissionais da beleza que querem aprender com qualidade e se destacar no mercado.
-            </p>
-            <Link href="/login" style={{
-              display: "inline-flex", alignItems: "center", gap: 8,
-              padding: "12px 24px", borderRadius: 12,
-              background: `linear-gradient(135deg, ${C.rose}, #e8729a)`,
-              color: "white", textDecoration: "none", fontSize: 14, fontWeight: 600,
-              boxShadow: `0 6px 20px ${C.rose}35`,
-            }}>
-              Quero começar agora <ArrowRight size={16} />
-            </Link>
-          </div>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            {[
-              "Aulas em vídeo HD assistidas quando quiser",
-              "Lives ao vivo com a professora",
-              "Acesso vitalício ao conteúdo comprado",
-              "Certificado de conclusão incluso",
-              "Técnicas do básico ao nível profissional",
-              "Suporte e comunidade de alunas",
-              "Novas aulas adicionadas regularmente",
-              "Funciona no celular, tablet e computador",
-            ].map((item) => (
-              <div key={item} style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <div style={{
-                  width: 24, height: 24, borderRadius: "50%", flexShrink: 0,
-                  background: `linear-gradient(135deg, ${C.rose}, #e8729a)`,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  boxShadow: `0 2px 8px ${C.rose}30`,
+          ) : (
+            // Skeleton cards
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24 }}>
+              {[1, 2, 3].map((n) => (
+                <div key={n} style={{
+                  borderRadius: 24,
+                  background: "white",
+                  border: "1px solid #EDCFDE",
+                  overflow: "hidden",
                 }}>
-                  <CheckCircle size={13} color="white" />
-                </div>
-                <span style={{ fontSize: 14, color: C.charcoal, fontWeight: 500 }}>{item}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Testimonials ── */}
-      <section style={{ padding: "70px 24px", background: C.blush }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: 48 }}>
-            <h2 style={{ fontSize: "clamp(24px, 3.5vw, 36px)", fontWeight: 800, letterSpacing: "-0.03em", color: C.black, marginBottom: 8 }}>
-              O que nossas alunas dizem
-            </h2>
-            <p style={{ color: C.muted, fontSize: 15 }}>Histórias reais de quem já transformou a carreira</p>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20 }}>
-            {[
-              {
-                name: "Mariana S.", role: "Nail Designer",
-                text: "Em 3 meses aprendi tudo sobre gel e hoje atendo mais de 40 clientes por mês. A qualidade das aulas é incrível!",
-                stars: 5, color: C.rose,
-              },
-              {
-                name: "Juliana R.", role: "Manicure Profissional",
-                text: "As técnicas de nail art que aprendi aqui transformaram meu trabalho. Minhas clientes ficam apaixonadas com os resultados!",
-                stars: 5, color: "#e8729a",
-              },
-              {
-                name: "Priscila M.", role: "Estudante",
-                text: "Comecei do zero e em poucos meses já estou atendendo. Os vídeos são muito detalhados e as lives tiram todas as dúvidas.",
-                stars: 5, color: C.gold,
-              },
-            ].map(({ name, role, text, stars, color }) => (
-              <div key={name} style={{
-                padding: "28px",
-                borderRadius: 20,
-                background: "white",
-                border: `1px solid ${C.border}`,
-                boxShadow: "0 4px 16px rgba(201,71,110,0.06)",
-              }}>
-                <div style={{ display: "flex", gap: 2, marginBottom: 16 }}>
-                  {[...Array(stars)].map((_, i) => <Star key={i} size={15} color="#f59e0b" fill="#f59e0b" />)}
-                </div>
-                <p style={{ fontSize: 14, color: C.charcoal, lineHeight: 1.7, marginBottom: 20, fontStyle: "italic" }}>
-                  "{text}"
-                </p>
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                   <div style={{
-                    width: 40, height: 40, borderRadius: "50%",
-                    background: `linear-gradient(135deg, ${color}, ${color}88)`,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontWeight: 700, color: "white", fontSize: 15,
-                  }}>
-                    {name[0]}
-                  </div>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: 14, color: C.black }}>{name}</div>
-                    <div style={{ fontSize: 12, color: C.muted }}>{role}</div>
+                    aspectRatio: "16/9",
+                    background: "linear-gradient(90deg, #F9E8F0 25%, #EDCFDE 50%, #F9E8F0 75%)",
+                    backgroundSize: "200% 100%",
+                    animation: "shimmer 1.5s infinite",
+                  }} />
+                  <div style={{ padding: "22px 24px" }}>
+                    <div style={{ height: 20, borderRadius: 8, background: "#F9E8F0", marginBottom: 10, width: "80%" }} />
+                    <div style={{ height: 14, borderRadius: 6, background: "#F9E8F0", marginBottom: 6, width: "100%" }} />
+                    <div style={{ height: 14, borderRadius: 6, background: "#F9E8F0", width: "60%" }} />
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── CTA ── */}
-      <section style={{ padding: "80px 24px", position: "relative", overflow: "hidden" }}>
-        <div style={{
-          maxWidth: 680, margin: "0 auto", textAlign: "center",
-          background: `linear-gradient(135deg, ${C.rose}, #e0567a, #e8729a)`,
-          borderRadius: 28,
-          padding: "60px 40px",
-          boxShadow: `0 20px 60px ${C.rose}40`,
-          position: "relative",
-          overflow: "hidden",
-        }}>
-          {/* decorations inside CTA */}
-          <div style={{ position: "absolute", top: -30, right: -30, width: 160, height: 160, borderRadius: "50%", background: "rgba(255,255,255,0.08)" }} />
-          <div style={{ position: "absolute", bottom: -20, left: -20, width: 120, height: 120, borderRadius: "50%", background: "rgba(255,255,255,0.06)" }} />
-
-          <div style={{ position: "relative", zIndex: 1 }}>
-            <div style={{ fontSize: 40, marginBottom: 12 }}>💅</div>
-            <h2 style={{ fontSize: "clamp(26px, 4vw, 40px)", fontWeight: 800, letterSpacing: "-0.03em", color: "white", marginBottom: 12 }}>
-              Comece sua jornada hoje
-            </h2>
-            <p style={{ color: "rgba(255,255,255,0.85)", fontSize: 16, marginBottom: 32, lineHeight: 1.6 }}>
-              Junte-se a milhares de alunas que já transformaram<br />suas vidas com a arte das unhas.
-            </p>
-            <Link href="/login" style={{
-              display: "inline-flex", alignItems: "center", gap: 8,
-              padding: "14px 32px", borderRadius: 12,
-              background: "white",
-              color: C.rose, textDecoration: "none", fontSize: 15, fontWeight: 700,
-              boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
-              letterSpacing: "-0.01em",
-            }}>
-              Criar minha conta — é grátis <ArrowRight size={17} />
-            </Link>
-            <p style={{ marginTop: 16, fontSize: 13, color: "rgba(255,255,255,0.65)" }}>
-              Sem cartão de crédito · Acesso imediato
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Footer ── */}
-      <footer style={{ background: C.black, padding: "40px 24px 28px" }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 24, marginBottom: 28, paddingBottom: 28, borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div style={{
-                width: 36, height: 36, borderRadius: 10,
-                background: `linear-gradient(135deg, ${C.rose}, #e8729a)`,
-                display: "flex", alignItems: "center", justifyContent: "center",
-              }}>
-                <Gem size={17} color="white" />
-              </div>
-              <div>
-                <span style={{ fontWeight: 800, fontSize: 17, color: "white" }}>Nail</span>
-                <span style={{ fontWeight: 800, fontSize: 17, color: C.rose }}>Class</span>
-              </div>
-            </div>
-            <p style={{ fontSize: 14, color: "rgba(255,255,255,0.35)" }}>
-              A escola de beleza mais completa do Brasil
-            </p>
-            <div style={{ display: "flex", gap: 24 }}>
-              {[["Cursos", "/courses"], ["Entrar", "/login"]].map(([label, href]) => (
-                <Link key={href} href={href} style={{ fontSize: 14, color: "rgba(255,255,255,0.45)", textDecoration: "none" }}>
-                  {label}
-                </Link>
               ))}
             </div>
+          )}
+        </div>
+      </section>
+
+      {/* ── TESTIMONIALS ── */}
+      <section id="depoimentos" style={{ background: "#0F0A0D", padding: "120px 32px", position: "relative", overflow: "hidden" }}>
+        {/* Background orbs */}
+        <div style={{
+          position: "absolute",
+          top: -100,
+          right: -100,
+          width: 400,
+          height: 400,
+          borderRadius: "50%",
+          background: "radial-gradient(circle, rgba(212,67,124,0.1) 0%, transparent 70%)",
+          pointerEvents: "none",
+        }} />
+        <div style={{
+          position: "absolute",
+          bottom: -80,
+          left: -80,
+          width: 350,
+          height: 350,
+          borderRadius: "50%",
+          background: "radial-gradient(circle, rgba(139,26,66,0.12) 0%, transparent 70%)",
+          pointerEvents: "none",
+        }} />
+
+        <div style={{ maxWidth: 1280, margin: "0 auto", position: "relative", zIndex: 1 }}>
+          {/* Large quote mark */}
+          <div style={{
+            fontSize: 160,
+            lineHeight: 1,
+            color: "#D4437C",
+            fontFamily: "Georgia, serif",
+            marginBottom: -60,
+            opacity: 0.6,
+            letterSpacing: "-0.05em",
+          }}>
+            &ldquo;
           </div>
-          <p style={{ textAlign: "center", fontSize: 13, color: "rgba(255,255,255,0.25)" }}>
-            © {new Date().getFullYear()} NailClass. Todos os direitos reservados.
+
+          {/* Heading */}
+          <div style={{ marginBottom: 72 }}>
+            <div style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "6px 18px",
+              borderRadius: 100,
+              background: "rgba(212,67,124,0.1)",
+              border: "1px solid rgba(212,67,124,0.25)",
+              color: "#D4437C",
+              fontSize: 12,
+              fontWeight: 700,
+              textTransform: "uppercase",
+              letterSpacing: "0.12em",
+              marginBottom: 20,
+            }}>
+              Depoimentos
+            </div>
+            <h2 style={{
+              fontSize: "clamp(28px, 4vw, 48px)",
+              fontWeight: 900,
+              letterSpacing: "-0.04em",
+              color: "#FEFAF8",
+              lineHeight: 1.08,
+              maxWidth: 560,
+            }}>
+              O que nossas alunas dizem
+            </h2>
+          </div>
+
+          {/* Cards */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }}>
+            {[
+              {
+                name: "Mariana S.",
+                role: "Nail Designer Profissional",
+                text: "Em 3 meses aprendi tudo sobre gel e hoje atendo mais de 40 clientes por mês. A qualidade das aulas é absolutamente incrível, cada detalhe explicado com perfeição.",
+                stars: 5,
+                color: "#D4437C",
+                initial: "M",
+              },
+              {
+                name: "Juliana R.",
+                role: "Manicure & Nail Artist",
+                text: "As técnicas de nail art que aprendi aqui transformaram completamente o meu trabalho. Minhas clientes ficam apaixonadas com os resultados. Não tem comparação.",
+                stars: 5,
+                color: "#C8A97A",
+                initial: "J",
+              },
+              {
+                name: "Priscila M.",
+                role: "Estudante → Profissional",
+                text: "Comecei totalmente do zero e em poucos meses já estou atendendo clientes. Os vídeos são detalhados e as lives tiram todas as dúvidas. Melhor investimento da minha vida.",
+                stars: 5,
+                color: "#8B1A42",
+                initial: "P",
+              },
+            ].map(({ name, role, text, stars, color, initial }) => (
+              <div key={name} style={{
+                padding: "36px 32px",
+                borderRadius: 24,
+                background: "rgba(254,250,248,0.04)",
+                border: "1px solid rgba(212,67,124,0.15)",
+                backdropFilter: "blur(10px)",
+                transition: "border-color 0.25s, background 0.25s",
+              }}
+                onMouseEnter={e => {
+                  (e.currentTarget as HTMLElement).style.borderColor = "rgba(212,67,124,0.4)";
+                  (e.currentTarget as HTMLElement).style.background = "rgba(254,250,248,0.07)";
+                }}
+                onMouseLeave={e => {
+                  (e.currentTarget as HTMLElement).style.borderColor = "rgba(212,67,124,0.15)";
+                  (e.currentTarget as HTMLElement).style.background = "rgba(254,250,248,0.04)";
+                }}
+              >
+                <div style={{ display: "flex", gap: 3, marginBottom: 24 }}>
+                  {[...Array(stars)].map((_, i) => (
+                    <Star key={i} size={16} color="#C8A97A" fill="#C8A97A" />
+                  ))}
+                </div>
+                <p style={{
+                  fontSize: 15,
+                  color: "rgba(254,250,248,0.8)",
+                  lineHeight: 1.8,
+                  marginBottom: 32,
+                  fontStyle: "italic",
+                  letterSpacing: "-0.01em",
+                }}>
+                  &ldquo;{text}&rdquo;
+                </p>
+                <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                  <div style={{
+                    width: 46,
+                    height: 46,
+                    borderRadius: "50%",
+                    background: `linear-gradient(135deg, ${color}, ${color}88)`,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontWeight: 800,
+                    color: "white",
+                    fontSize: 17,
+                    flexShrink: 0,
+                    border: "2px solid rgba(212,67,124,0.3)",
+                  }}>
+                    {initial}
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: 14, color: "#FEFAF8", letterSpacing: "-0.01em" }}>{name}</div>
+                    <div style={{ fontSize: 12, color: "rgba(254,250,248,0.4)", marginTop: 3 }}>{role}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── CTA FULL-BLEED ── */}
+      <section style={{
+        background: "linear-gradient(135deg, #D4437C 0%, #8B1A42 100%)",
+        padding: "120px 32px",
+        textAlign: "center",
+        position: "relative",
+        overflow: "hidden",
+      }}>
+        {/* Decorative shapes */}
+        <div style={{ position: "absolute", top: -100, left: -100, width: 400, height: 400, borderRadius: "50%", background: "rgba(255,255,255,0.06)", pointerEvents: "none" }} />
+        <div style={{ position: "absolute", bottom: -80, right: -80, width: 350, height: 350, borderRadius: "50%", background: "rgba(0,0,0,0.08)", pointerEvents: "none" }} />
+        <div style={{ position: "absolute", top: 40, right: "20%", color: "rgba(255,255,255,0.15)", fontSize: 60, fontWeight: 900, pointerEvents: "none" }}>✦</div>
+        <div style={{ position: "absolute", bottom: 40, left: "15%", color: "rgba(255,255,255,0.08)", fontSize: 40, fontWeight: 900, pointerEvents: "none" }}>✦</div>
+
+        <div style={{ position: "relative", zIndex: 1, maxWidth: 700, margin: "0 auto" }}>
+          <div style={{ fontSize: 56, marginBottom: 20, lineHeight: 1 }}>💅</div>
+          <h2 style={{
+            fontSize: "clamp(32px, 5vw, 64px)",
+            fontWeight: 900,
+            letterSpacing: "-0.05em",
+            color: "white",
+            lineHeight: 1.0,
+            marginBottom: 20,
+          }}>
+            Comece sua<br />transformação hoje
+          </h2>
+          <p style={{
+            fontSize: 17,
+            color: "rgba(255,255,255,0.8)",
+            lineHeight: 1.7,
+            marginBottom: 44,
+            maxWidth: 480,
+            margin: "0 auto 44px",
+          }}>
+            Junte-se a mais de 2.400 alunas que já transformaram sua paixão por unhas em uma carreira lucrativa.
+          </p>
+          <Link href="/login" style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 10,
+            padding: "18px 44px",
+            borderRadius: 100,
+            background: "white",
+            color: "#8B1A42",
+            textDecoration: "none",
+            fontSize: 16,
+            fontWeight: 800,
+            letterSpacing: "-0.02em",
+            boxShadow: "0 12px 40px rgba(0,0,0,0.2)",
+            transition: "transform 0.2s, box-shadow 0.2s",
+          }}
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLElement).style.transform = "translateY(-3px)";
+              (e.currentTarget as HTMLElement).style.boxShadow = "0 20px 50px rgba(0,0,0,0.3)";
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLElement).style.transform = "translateY(0)";
+              (e.currentTarget as HTMLElement).style.boxShadow = "0 12px 40px rgba(0,0,0,0.2)";
+            }}
+          >
+            Criar minha conta — é grátis
+            <ArrowRight size={18} />
+          </Link>
+          <p style={{ marginTop: 20, fontSize: 13, color: "rgba(255,255,255,0.55)" }}>
+            Sem cartão de crédito · Acesso imediato
           </p>
         </div>
+      </section>
+
+      {/* ── FOOTER ── */}
+      <footer style={{ background: "#0F0A0D", padding: "56px 32px 32px" }}>
+        <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+          <div style={{
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: 40,
+            paddingBottom: 48,
+            marginBottom: 32,
+            borderBottom: "1px solid rgba(212,67,124,0.15)",
+          }}>
+            {/* Brand */}
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+                <div style={{
+                  width: 38,
+                  height: 38,
+                  borderRadius: 11,
+                  background: "linear-gradient(135deg, #D4437C, #8B1A42)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxShadow: "0 4px 14px rgba(212,67,124,0.4)",
+                }}>
+                  <Gem size={17} color="white" />
+                </div>
+                <span style={{ fontWeight: 900, fontSize: 20, letterSpacing: "-0.04em", color: "#FEFAF8" }}>
+                  Nail<span style={{ color: "#D4437C" }}>✦</span>Class
+                </span>
+              </div>
+              <p style={{ fontSize: 14, color: "rgba(254,250,248,0.35)", maxWidth: 260, lineHeight: 1.7 }}>
+                A escola de unhas mais completa do Brasil. Do zero ao profissional.
+              </p>
+            </div>
+
+            {/* Nav links */}
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "rgba(254,250,248,0.25)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 16 }}>
+                Navegação
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {[["Cursos", "/courses"], ["Entrar", "/login"], ["Sobre", "#sobre"]].map(([label, href]) => (
+                  <Link key={href} href={href} style={{
+                    fontSize: 14,
+                    color: "rgba(254,250,248,0.45)",
+                    textDecoration: "none",
+                    transition: "color 0.2s",
+                  }}>
+                    {label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+            <p style={{ fontSize: 13, color: "rgba(254,250,248,0.2)" }}>
+              © {new Date().getFullYear()} NailClass. Todos os direitos reservados.
+            </p>
+            <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+              <div style={{ width: 4, height: 4, borderRadius: "50%", background: "#D4437C", opacity: 0.5 }} />
+              <span style={{ fontSize: 13, color: "rgba(254,250,248,0.2)" }}>Feito com ✦ para profissionais da beleza</span>
+            </div>
+          </div>
+        </div>
       </footer>
+
+      {/* ── Global keyframes ── */}
+      <style>{`
+        @keyframes marquee {
+          from { transform: translateX(0); }
+          to { transform: translateX(-50%); }
+        }
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-10px); }
+        }
+        @keyframes shimmer {
+          0% { background-position: -200% center; }
+          100% { background-position: 200% center; }
+        }
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(24px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+        @media (max-width: 900px) {
+          .hero-grid { grid-template-columns: 1fr !important; }
+          .hero-cards { display: none !important; }
+          .features-row { grid-template-columns: 1fr !important; }
+          .stats-row { grid-template-columns: repeat(2, 1fr) !important; }
+          .courses-grid { grid-template-columns: repeat(2, 1fr) !important; }
+          .testimonials-grid { grid-template-columns: 1fr !important; }
+          .footer-top { flex-direction: column !important; }
+        }
+        @media (max-width: 600px) {
+          .courses-grid { grid-template-columns: 1fr !important; }
+          .stats-row { grid-template-columns: repeat(2, 1fr) !important; }
+        }
+      `}</style>
     </div>
   );
 }
