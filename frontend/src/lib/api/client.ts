@@ -1,10 +1,34 @@
 import axios, { AxiosError } from "axios";
 
+// Se o bundle foi compilado com localhost mas está rodando em outro host,
+// usa o hostname real do browser na porta 8080 (API).
+function getApiUrl(): string {
+  const baked = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+  if (typeof window === "undefined") return baked; // SSR: usa o valor baked
+  try {
+    const { hostname } = window.location;
+    // Se o baked veio como localhost mas o browser não está em localhost, corrige.
+    const bakedHost = new URL(baked).hostname;
+    if (bakedHost === "localhost" && hostname !== "localhost") {
+      return baked.replace("localhost", hostname);
+    }
+  } catch {}
+  return baked;
+}
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
 export const api = axios.create({
   baseURL: API_URL,
   withCredentials: true,
+});
+
+// Corrige o baseURL antes de cada request (client-side apenas)
+api.interceptors.request.use((config) => {
+  if (typeof window !== "undefined") {
+    config.baseURL = getApiUrl();
+  }
+  return config;
 });
 
 // Request interceptor — attach access token from localStorage
@@ -48,7 +72,7 @@ api.interceptors.response.use(
 
       try {
         const { data } = await axios.post(
-          `${API_URL}/api/auth/refresh`,
+          `${getApiUrl()}/api/auth/refresh`,
           {},
           { withCredentials: true }
         );
