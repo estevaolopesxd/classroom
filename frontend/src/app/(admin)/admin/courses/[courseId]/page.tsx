@@ -106,7 +106,7 @@ function BtnIcon({ children, onClick, danger = false, title }: {
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={e => { e.stopPropagation(); onClick?.(); }}
       title={title}
       style={{
         width: 30, height: 30, borderRadius: 8,
@@ -474,7 +474,7 @@ export default function CourseEditorPage() {
                 <span style={{ fontSize: 12, color: S.muted, marginRight: 8 }}>
                   {mod.lessons?.length || 0} aulas
                 </span>
-                <BtnIcon onClick={e => { e.stopPropagation(); deleteModule(mod.id); }} danger title="Excluir módulo">
+                <BtnIcon onClick={() => deleteModule(mod.id)} danger title="Excluir módulo">
                   <Trash2 size={13} color={S.rose} />
                 </BtnIcon>
               </div>
