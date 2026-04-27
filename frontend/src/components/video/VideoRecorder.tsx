@@ -2,18 +2,6 @@
 
 import { useRef, useState, useEffect, useCallback } from "react";
 import { videosApi } from "@/lib/api/videos";
-
-/* Fix presigned MinIO URLs — backend uses internal Docker hostname;
-   browser needs the real server hostname */
-function fixMinioUrl(url: string): string {
-  if (typeof window === "undefined") return url;
-  try {
-    const parsed = new URL(url);
-    const currentHost = window.location.hostname;
-    if (parsed.hostname !== currentHost) parsed.hostname = currentHost;
-    return parsed.toString();
-  } catch { return url; }
-}
 import { Progress } from "@/components/ui/progress";
 import {
   Video, Square, Upload, CheckCircle, Loader2,
@@ -117,6 +105,10 @@ export function VideoRecorder({ onVideoReady }: VideoRecorderProps) {
 
   // Start camera preview (always on for PiP and camera modes)
   const startCameraPreview = async () => {
+    if (!navigator.mediaDevices) {
+      toast.error("Câmera exige HTTPS. Acesse a plataforma via https://.", { duration: 8000 });
+      return;
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
@@ -134,6 +126,11 @@ export function VideoRecorder({ onVideoReady }: VideoRecorderProps) {
   };
 
   const startRecording = async () => {
+    // navigator.mediaDevices is only available in secure contexts (HTTPS or localhost)
+    if (!navigator.mediaDevices) {
+      toast.error("Câmera/tela exige HTTPS. Acesse a plataforma via https:// ou use localhost.", { duration: 8000 });
+      return;
+    }
     try {
       let recordStream: MediaStream;
       let displayStream: MediaStream | undefined;
@@ -279,9 +276,9 @@ export function VideoRecorder({ onVideoReady }: VideoRecorderProps) {
       for (const part of parts) {
         const start = (part.partNumber - 1) * chunkSize;
         const chunk = blob.slice(start, Math.min(start + chunkSize, blob.size));
-        const res = await fetch(fixMinioUrl(part.url), { method: "PUT", body: chunk, headers: { "Content-Type": "video/webm" } });
-        const eTag = (res.headers.get("ETag") ?? `"${part.partNumber}"`).replace(/"/g, "");
-        completedParts.push({ partNumber: part.partNumber, eTag });
+        // Upload via API proxy — avoids browser→MinIO SSL/CORS issues
+        const eTag = await videosApi.uploadPart(videoId, uploadId, part.partNumber, chunk);
+        completedParts.push({ partNumber: part.partNumber, eTag: eTag.replace(/"/g, "") });
         setProgress(Math.round((part.partNumber / parts.length) * 100));
       }
 

@@ -72,6 +72,20 @@ public class MinIOStorageService
         return url;
     }
 
+    public async Task<string> UploadPartAsync(string bucket, string objectKey, string uploadId, int partNumber, Stream data)
+    {
+        var request = new Amazon.S3.Model.UploadPartRequest
+        {
+            BucketName = bucket,
+            Key = objectKey,
+            UploadId = uploadId,
+            PartNumber = partNumber,
+            InputStream = data,
+        };
+        var response = await _client.UploadPartAsync(request);
+        return response.ETag;
+    }
+
     public async Task CompleteMultipartUpload(string bucket, string objectKey, string uploadId, List<(int PartNumber, string ETag)> parts)
     {
         var request = new CompleteMultipartUploadRequest

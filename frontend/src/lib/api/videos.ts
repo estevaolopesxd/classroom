@@ -5,6 +5,17 @@ export const videosApi = {
   initiateUpload: (data: { fileName: string; fileSize: number; contentType: string; title?: string }) =>
     api.post<UploadInitResponse>("/api/videos/upload/initiate", data).then((r) => r.data),
 
+  /**
+   * Upload a single multipart chunk via the backend proxy.
+   * The backend forwards it to MinIO internally — the browser never touches MinIO directly.
+   * Returns the ETag for that part.
+   */
+  uploadPart: (videoId: string, uploadId: string, partNumber: number, chunk: Blob): Promise<string> =>
+    api.put<{ eTag: string }>("/api/videos/upload/part", chunk, {
+      params: { videoId, uploadId, partNumber },
+      headers: { "Content-Type": "application/octet-stream" },
+    }).then((r) => r.data.eTag),
+
   completeUpload: (data: { videoId: string; uploadId: string; parts: Array<{ partNumber: number; eTag: string }> }) =>
     api.post<Video>("/api/videos/upload/complete", data).then((r) => r.data),
 

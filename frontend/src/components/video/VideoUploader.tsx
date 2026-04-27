@@ -5,26 +5,6 @@ import { videosApi } from "@/lib/api/videos";
 import { Upload, CheckCircle, AlertCircle, Loader2, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 
-/* ── Fix presigned MinIO URLs so the browser can reach MinIO ──────────────────
-   The backend generates presigned URLs using the internal Docker hostname
-   (e.g. "minio:9000" or "localhost:9000"). The browser cannot resolve
-   those names when accessing the platform from another machine.
-   We replace the hostname with the current browser hostname at runtime.
-──────────────────────────────────────────────────────────────────────────── */
-function fixMinioUrl(url: string): string {
-  if (typeof window === "undefined") return url;
-  try {
-    const parsed = new URL(url);
-    const currentHost = window.location.hostname;
-    if (parsed.hostname !== currentHost) {
-      parsed.hostname = currentHost;
-    }
-    return parsed.toString();
-  } catch {
-    return url;
-  }
-}
-
 interface VideoUploaderProps {
   onVideoReady: (videoId: string) => void;
 }
@@ -73,16 +53,8 @@ export function VideoUploader({ onVideoReady }: VideoUploaderProps) {
         const end = Math.min(start + chunkSize, file.size);
         const chunk = file.slice(start, end);
 
-        // Fix hostname so the browser can reach MinIO from any network
-        const uploadUrl = fixMinioUrl(part.url);
-
-        const response = await fetch(uploadUrl, {
-          method: "PUT",
-          body: chunk,
-          headers: { "Content-Type": file.type },
-        });
-
-        const eTag = response.headers.get("ETag") ?? `"${part.partNumber}"`;
+        // Upload via API proxy — avoids browser→MinIO direct connection (SSL/CORS issues)
+        const eTag = await videosApi.uploadPart(videoId, uploadId, part.partNumber, chunk);
         completedParts.push({ partNumber: part.partNumber, eTag: eTag.replace(/"/g, "") });
 
         setProgress(Math.round((part.partNumber / parts.length) * 100));

@@ -67,6 +67,31 @@ public class VideosController(AppDbContext db, MinIOStorageService storage, Vide
         return Ok(MapDto(video));
     }
 
+    /// <summary>
+    /// Proxy: receive one chunk from the browser and upload it directly to MinIO.
+    /// This avoids the browser needing to reach MinIO directly (SSL/CORS issues).
+    /// </summary>
+    [HttpPut("upload/part")]
+    [Authorize(Roles = "Admin")]
+    [RequestSizeLimit(12 * 1024 * 1024)] // 12MB (10MB chunk + overhead)
+    public async Task<ActionResult<object>> UploadPartProxy(
+        [FromQuery] Guid videoId,
+        [FromQuery] string uploadId,
+        [FromQuery] int partNumber)
+    {
+        var video = await db.Videos.FindAsync(videoId);
+        if (video is null) return NotFound();
+
+        var bucket = configuration["MinIO:BucketVideos"]!;
+
+        using var memStream = new MemoryStream();
+        await Request.Body.CopyToAsync(memStream);
+        memStream.Position = 0;
+
+        var eTag = await storage.UploadPartAsync(bucket, video.OriginalKey!, uploadId, partNumber, memStream);
+        return Ok(new { eTag });
+    }
+
     [HttpPost("upload/abort")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> AbortUpload([FromBody] AbortUploadRequest request)
