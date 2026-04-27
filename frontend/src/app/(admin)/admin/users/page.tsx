@@ -1,24 +1,40 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { adminApi } from "@/lib/api/admin";
 import type { User } from "@/types";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Search, Users, Loader2, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
+import Link from "next/link";
+
+const S = {
+  rose: "#D4437C",
+  roseDark: "#8B1A42",
+  bg: "#F8F3F6",
+  white: "#FFFFFF",
+  ink: "#1A0A12",
+  muted: "#8B6676",
+  border: "#EDCFDE",
+  green: "#16a34a",
+  overlay: "rgba(26,10,18,0.45)",
+};
+
+const inputStyle: React.CSSProperties = {
+  width: "100%", boxSizing: "border-box",
+  padding: "10px 14px", borderRadius: 10,
+  border: `1.5px solid ${S.border}`, background: S.white,
+  fontSize: 14, color: S.ink, outline: "none", fontFamily: "inherit",
+};
+
+const labelStyle: React.CSSProperties = {
+  fontSize: 13, fontWeight: 600, color: S.ink, display: "block", marginBottom: 6,
+};
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
-  const [createDialog, setCreateDialog] = useState(false);
+  const [modal, setModal] = useState(false);
   const [form, setForm] = useState({ email: "", password: "", firstName: "", lastName: "", role: "Student" });
   const [creating, setCreating] = useState(false);
 
@@ -34,7 +50,7 @@ export default function AdminUsersPage() {
     try {
       await adminApi.createUser(form);
       toast.success("Usuário criado com sucesso");
-      setCreateDialog(false);
+      setModal(false);
       setForm({ email: "", password: "", firstName: "", lastName: "", role: "Student" });
       load();
     } catch {
@@ -49,106 +65,191 @@ export default function AdminUsersPage() {
     u.email.toLowerCase().includes(search.toLowerCase())
   );
 
+  const disabled = creating || !form.email || !form.password || !form.firstName || !form.lastName;
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
         <div>
-          <h1 className="text-2xl font-bold">Usuários</h1>
-          <p className="text-muted-foreground">{users.length} usuários cadastrados</p>
+          <h1 style={{ fontSize: 24, fontWeight: 800, color: S.ink, margin: 0, letterSpacing: "-0.03em" }}>Usuários</h1>
+          <p style={{ fontSize: 14, color: S.muted, margin: "4px 0 0" }}>{users.length} usuário{users.length !== 1 ? "s" : ""} cadastrado{users.length !== 1 ? "s" : ""}</p>
         </div>
-        <Button onClick={() => setCreateDialog(true)} className="gap-2">
-          <Plus className="size-4" /> Novo usuário
-        </Button>
+        <button
+          onClick={() => setModal(true)}
+          style={{
+            display: "inline-flex", alignItems: "center", gap: 8,
+            padding: "10px 20px", borderRadius: 10, border: "none",
+            background: `linear-gradient(135deg, ${S.rose}, ${S.roseDark})`,
+            color: "white", fontSize: 14, fontWeight: 700, cursor: "pointer",
+            boxShadow: "0 4px 14px rgba(212,67,124,0.35)", fontFamily: "inherit",
+          }}
+        >
+          <Plus size={16} /> Novo usuário
+        </button>
       </div>
 
-      <div className="relative w-full max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-        <Input placeholder="Buscar por nome ou e-mail..." className="pl-9" value={search} onChange={e => setSearch(e.target.value)} />
+      {/* Search */}
+      <div style={{ position: "relative", maxWidth: 380 }}>
+        <Search size={16} color={S.muted} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }} />
+        <input
+          placeholder="Buscar por nome ou e-mail..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          style={{ ...inputStyle, paddingLeft: 38 }}
+        />
       </div>
 
+      {/* List */}
       {loading ? (
-        <div className="flex items-center justify-center h-40">
-          <Loader2 className="size-8 animate-spin text-primary" />
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 160 }}>
+          <Loader2 size={28} color={S.rose} style={{ animation: "spin 1s linear infinite" }} />
         </div>
       ) : (
-        <div className="space-y-2">
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {filtered.map(user => (
-            <Link key={user.id} href={`/admin/users/${user.id}`}>
-              <Card className="border-border/50 hover:border-primary/30 transition-colors cursor-pointer">
-                <CardContent className="p-4 flex items-center gap-4">
-                  <div className="size-10 rounded-full bg-primary/20 flex items-center justify-center text-sm font-bold text-primary shrink-0">
-                    {user.firstName[0]}{user.lastName[0]}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{user.fullName}</p>
-                    <p className="text-sm text-muted-foreground truncate">{user.email}</p>
-                  </div>
-                  <div className="flex items-center gap-3 shrink-0">
-                    <Badge variant={user.role === "Admin" ? "default" : "secondary"} className="text-xs">
-                      {user.role === "Admin" ? "Admin" : "Aluno"}
-                    </Badge>
-                    {!user.isActive && (
-                      <Badge variant="destructive" className="text-xs">Inativo</Badge>
-                    )}
-                    <ChevronRight className="size-4 text-muted-foreground" />
-                  </div>
-                </CardContent>
-              </Card>
+            <Link key={user.id} href={`/admin/users/${user.id}`} style={{ textDecoration: "none" }}>
+              <div style={{
+                display: "flex", alignItems: "center", gap: 14,
+                padding: "14px 16px", background: S.white,
+                borderRadius: 12, border: `1px solid ${S.border}`,
+                transition: "border-color 0.15s, box-shadow 0.15s", cursor: "pointer",
+              }}
+                onMouseEnter={e => {
+                  (e.currentTarget as HTMLElement).style.borderColor = S.rose + "55";
+                  (e.currentTarget as HTMLElement).style.boxShadow = "0 2px 12px rgba(212,67,124,0.08)";
+                }}
+                onMouseLeave={e => {
+                  (e.currentTarget as HTMLElement).style.borderColor = S.border;
+                  (e.currentTarget as HTMLElement).style.boxShadow = "none";
+                }}
+              >
+                {/* Avatar */}
+                <div style={{
+                  width: 40, height: 40, borderRadius: "50%", flexShrink: 0,
+                  background: "rgba(212,67,124,0.1)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 14, fontWeight: 700, color: S.rose,
+                }}>
+                  {user.firstName[0]}{user.lastName[0]}
+                </div>
+
+                {/* Info */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: 14, fontWeight: 700, color: S.ink, margin: 0 }}>{user.fullName}</p>
+                  <p style={{ fontSize: 12, color: S.muted, margin: "2px 0 0" }}>{user.email}</p>
+                </div>
+
+                {/* Badges + arrow */}
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                  <span style={{
+                    fontSize: 11, fontWeight: 700, padding: "3px 9px", borderRadius: 100,
+                    background: user.role === "Admin" ? "rgba(212,67,124,0.1)" : "rgba(0,0,0,0.06)",
+                    color: user.role === "Admin" ? S.rose : S.muted,
+                  }}>
+                    {user.role === "Admin" ? "Admin" : "Aluno"}
+                  </span>
+                  {!user.isActive && (
+                    <span style={{
+                      fontSize: 11, fontWeight: 700, padding: "3px 9px", borderRadius: 100,
+                      background: "rgba(239,68,68,0.1)", color: "#ef4444",
+                    }}>Inativo</span>
+                  )}
+                  <ChevronRight size={16} color={S.muted} />
+                </div>
+              </div>
             </Link>
           ))}
 
           {filtered.length === 0 && (
-            <div className="text-center py-16">
-              <Users className="size-12 text-muted-foreground/30 mx-auto mb-3" />
-              <p className="text-muted-foreground">Nenhum usuário encontrado.</p>
+            <div style={{ textAlign: "center", padding: "64px 24px" }}>
+              <Users size={40} color={S.border} style={{ margin: "0 auto 12px" }} />
+              <p style={{ fontSize: 14, color: S.muted }}>Nenhum usuário encontrado.</p>
             </div>
           )}
         </div>
       )}
 
-      {/* Create User Dialog */}
-      <Dialog open={createDialog} onOpenChange={setCreateDialog}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Novo usuário</DialogTitle></DialogHeader>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Nome</Label>
-                <Input placeholder="João" value={form.firstName} onChange={e => setForm(f => ({ ...f, firstName: e.target.value }))} />
+      {/* ── Create user modal ── */}
+      {modal && (
+        <div
+          style={{
+            position: "fixed", inset: 0, zIndex: 9999,
+            background: S.overlay, display: "flex",
+            alignItems: "center", justifyContent: "center", padding: 16,
+          }}
+          onClick={e => { if (e.target === e.currentTarget) setModal(false); }}
+        >
+          <div style={{
+            background: S.white, borderRadius: 16, padding: 28,
+            width: "100%", maxWidth: 460,
+            boxShadow: "0 20px 60px rgba(26,10,18,0.18)",
+          }}>
+            <h2 style={{ fontSize: 17, fontWeight: 800, color: S.ink, margin: "0 0 20px", letterSpacing: "-0.02em" }}>
+              Novo usuário
+            </h2>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <div>
+                  <label style={labelStyle}>Nome</label>
+                  <input placeholder="João" value={form.firstName} onChange={e => setForm(f => ({ ...f, firstName: e.target.value }))} style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Sobrenome</label>
+                  <input placeholder="Silva" value={form.lastName} onChange={e => setForm(f => ({ ...f, lastName: e.target.value }))} style={inputStyle} />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label>Sobrenome</Label>
-                <Input placeholder="Silva" value={form.lastName} onChange={e => setForm(f => ({ ...f, lastName: e.target.value }))} />
+              <div>
+                <label style={labelStyle}>E-mail</label>
+                <input type="email" placeholder="joao@exemplo.com" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} style={inputStyle} />
+              </div>
+              <div>
+                <label style={labelStyle}>Senha</label>
+                <input type="password" placeholder="Mínimo 8 caracteres" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} style={inputStyle} />
+              </div>
+              <div>
+                <label style={labelStyle}>Papel</label>
+                <select value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))} style={{ ...inputStyle, cursor: "pointer", appearance: "auto" }}>
+                  <option value="Student">Aluno</option>
+                  <option value="Admin">Admin</option>
+                </select>
               </div>
             </div>
-            <div className="space-y-2">
-              <Label>E-mail</Label>
-              <Input type="email" placeholder="joao@exemplo.com" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
-            </div>
-            <div className="space-y-2">
-              <Label>Senha</Label>
-              <Input type="password" placeholder="Mínimo 8 caracteres" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} />
-            </div>
-            <div className="space-y-2">
-              <Label>Papel</Label>
-              <Select value={form.role} onValueChange={v => setForm(f => ({ ...f, role: v ?? "Student" }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Student">Aluno</SelectItem>
-                  <SelectItem value="Admin">Admin</SelectItem>
-                </SelectContent>
-              </Select>
+
+            <div style={{ display: "flex", gap: 10, marginTop: 24 }}>
+              <button
+                onClick={createUser}
+                disabled={disabled}
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 8,
+                  padding: "10px 20px", borderRadius: 10, border: "none",
+                  background: disabled ? "#d0bbc5" : `linear-gradient(135deg, ${S.rose}, ${S.roseDark})`,
+                  color: "white", fontSize: 14, fontWeight: 700,
+                  cursor: disabled ? "not-allowed" : "pointer", fontFamily: "inherit",
+                }}
+              >
+                {creating && <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} />}
+                Criar usuário
+              </button>
+              <button
+                onClick={() => setModal(false)}
+                style={{
+                  display: "inline-flex", alignItems: "center",
+                  padding: "10px 18px", borderRadius: 10,
+                  border: `1.5px solid ${S.border}`, background: S.white,
+                  color: S.ink, fontSize: 14, fontWeight: 600,
+                  cursor: "pointer", fontFamily: "inherit",
+                }}
+              >
+                Cancelar
+              </button>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateDialog(false)}>Cancelar</Button>
-            <Button onClick={createUser} disabled={creating || !form.email || !form.password || !form.firstName || !form.lastName}>
-              {creating ? <Loader2 className="size-4 animate-spin mr-2" /> : null}
-              Criar usuário
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
     </div>
   );
 }

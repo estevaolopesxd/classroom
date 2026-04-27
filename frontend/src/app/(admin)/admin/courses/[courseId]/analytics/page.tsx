@@ -7,7 +7,6 @@ import { coursesApi } from "@/lib/api/courses";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { ArrowLeft, Users, BookOpen, TrendingUp, Loader2 } from "lucide-react";
 import Link from "next/link";
 
@@ -54,9 +53,13 @@ export default function CourseAnalyticsPage() {
     <div className="space-y-6 max-w-4xl">
       <div className="flex items-center gap-3">
         <Link href={`/admin/courses/${courseId}`}>
-          <Button variant="ghost" size="icon" className="size-8">
-            <ArrowLeft className="size-4" />
-          </Button>
+          <button style={{
+            width: 34, height: 34, borderRadius: 10, border: "1px solid #EDCFDE",
+            background: "#FFFFFF", cursor: "pointer", display: "flex",
+            alignItems: "center", justifyContent: "center",
+          }}>
+            <ArrowLeft size={16} color="#1A0A12" />
+          </button>
         </Link>
         <div>
           <h1 className="text-2xl font-bold">Analytics</h1>

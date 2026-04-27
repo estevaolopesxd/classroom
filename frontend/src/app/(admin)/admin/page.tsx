@@ -6,8 +6,21 @@ import { adminApi } from "@/lib/api/admin";
 import type { AdminDashboard } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Users, BookOpen, GraduationCap, DollarSign, TrendingUp, Plus, ChevronRight, Loader2 } from "lucide-react";
+
+const BtnSm = ({ children, href, outline = false }: { children: React.ReactNode; href: string; outline?: boolean }) => (
+  <Link href={href}>
+    <button style={{
+      display: "inline-flex", alignItems: "center", gap: 6,
+      padding: "7px 14px", borderRadius: 9, border: outline ? "1.5px solid #EDCFDE" : "none",
+      background: outline ? "#FFFFFF" : "linear-gradient(135deg, #D4437C, #8B1A42)",
+      color: outline ? "#1A0A12" : "white", fontSize: 13, fontWeight: 700,
+      cursor: "pointer", fontFamily: "inherit",
+    }}>
+      {children}
+    </button>
+  </Link>
+);
 
 export default function AdminDashboardPage() {
   const [data, setData] = useState<AdminDashboard | null>(null);
@@ -43,19 +56,9 @@ export default function AdminDashboardPage() {
           <h1 className="text-2xl font-bold">Dashboard</h1>
           <p className="text-muted-foreground">Visão geral da plataforma</p>
         </div>
-        <div className="flex gap-2">
-          <Link href="/admin/courses/new">
-            <Button className="gap-2" size="sm">
-              <Plus className="size-4" />
-              Novo curso
-            </Button>
-          </Link>
-          <Link href="/admin/users">
-            <Button variant="outline" className="gap-2" size="sm">
-              <Plus className="size-4" />
-              Novo usuário
-            </Button>
-          </Link>
+        <div style={{ display: "flex", gap: 8 }}>
+          <BtnSm href="/admin/courses/new"><Plus size={14} /> Novo curso</BtnSm>
+          <BtnSm href="/admin/users" outline><Plus size={14} /> Novo usuário</BtnSm>
         </div>
       </div>
 
@@ -82,9 +85,9 @@ export default function AdminDashboardPage() {
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-base">Cursos recentes</CardTitle>
             <Link href="/admin/courses">
-              <Button variant="ghost" size="sm" className="gap-1 h-7 text-xs">
-                Ver todos <ChevronRight className="size-3" />
-              </Button>
+              <button style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12, color: "#8B6676", display: "flex", alignItems: "center", gap: 2 }}>
+                Ver todos <ChevronRight size={12} />
+              </button>
             </Link>
           </CardHeader>
           <CardContent className="space-y-2">
@@ -115,9 +118,9 @@ export default function AdminDashboardPage() {
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-base">Usuários recentes</CardTitle>
             <Link href="/admin/users">
-              <Button variant="ghost" size="sm" className="gap-1 h-7 text-xs">
-                Ver todos <ChevronRight className="size-3" />
-              </Button>
+              <button style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12, color: "#8B6676", display: "flex", alignItems: "center", gap: 2 }}>
+                Ver todos <ChevronRight size={12} />
+              </button>
             </Link>
           </CardHeader>
           <CardContent className="space-y-2">

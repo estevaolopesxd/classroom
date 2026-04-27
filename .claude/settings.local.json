@@ -20,7 +20,9 @@
       "Bash(npm run:*)",
       "Bash(find \"C:\\\\Desenvolvimento\\\\Classroom\\\\frontend\\\\src\\\\app\\\\\\(admin\\)\" -type f \\\\\\( -name \"*.tsx\" -o -name \"*.ts\" -o -name \"*.jsx\" -o -name \"*.js\" -o -name \"*.json\" -o -name \"*.md\" \\\\\\) -exec ls -lh {} \\\\;)",
       "Bash(awk '{print $5, $9}')",
-      "Bash(find \"C:\\\\Desenvolvimento\\\\Classroom\\\\frontend\\\\src\\\\app\\\\\\(admin\\)\" -type f \\\\\\( -name \"*.tsx\" -o -name \"*.ts\" \\\\\\) -exec wc -l {} +)"
+      "Bash(find \"C:\\\\Desenvolvimento\\\\Classroom\\\\frontend\\\\src\\\\app\\\\\\(admin\\)\" -type f \\\\\\( -name \"*.tsx\" -o -name \"*.ts\" \\\\\\) -exec wc -l {} +)",
+      "PowerShell(git -C \"C:\\\\Desenvolvimento\\\\Classroom\" status --short)",
+      "PowerShell(git -C \"C:\\\\Desenvolvimento\\\\Classroom\" status 2>&1)"
     ]
   }
 }

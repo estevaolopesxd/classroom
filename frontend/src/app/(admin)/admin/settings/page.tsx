@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { themeApi } from "@/lib/api/theme";
 import type { Theme } from "@/types";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -198,14 +197,35 @@ export default function AdminSettingsPage() {
           </div>
 
           <div className="flex gap-3">
-            <Button onClick={save} disabled={saving} className="gap-2">
-              {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+            <button
+              onClick={save}
+              disabled={saving}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 7,
+                padding: "10px 20px", borderRadius: 10, border: "none",
+                background: saving ? "#d0bbc5" : "linear-gradient(135deg, #D4437C, #8B1A42)",
+                color: "white", fontSize: 14, fontWeight: 700,
+                cursor: saving ? "not-allowed" : "pointer", fontFamily: "inherit",
+                boxShadow: saving ? "none" : "0 3px 12px rgba(212,67,124,0.3)",
+              }}
+            >
+              {saving ? <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} /> : <Save size={14} />}
               Salvar tema
-            </Button>
-            <Button variant="outline" onClick={reset} className="gap-2">
-              <RotateCcw className="size-4" /> Resetar padrão
-            </Button>
+            </button>
+            <button
+              onClick={reset}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 7,
+                padding: "10px 18px", borderRadius: 10,
+                border: "1.5px solid #EDCFDE", background: "#FFFFFF",
+                color: "#1A0A12", fontSize: 14, fontWeight: 600,
+                cursor: "pointer", fontFamily: "inherit",
+              }}
+            >
+              <RotateCcw size={14} /> Resetar padrão
+            </button>
           </div>
+          <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
         </CardContent>
       </Card>
     </div>
