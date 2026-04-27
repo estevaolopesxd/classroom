@@ -2,6 +2,18 @@
 
 import { useRef, useState, useEffect, useCallback } from "react";
 import { videosApi } from "@/lib/api/videos";
+
+/* Fix presigned MinIO URLs — backend uses internal Docker hostname;
+   browser needs the real server hostname */
+function fixMinioUrl(url: string): string {
+  if (typeof window === "undefined") return url;
+  try {
+    const parsed = new URL(url);
+    const currentHost = window.location.hostname;
+    if (parsed.hostname !== currentHost) parsed.hostname = currentHost;
+    return parsed.toString();
+  } catch { return url; }
+}
 import { Progress } from "@/components/ui/progress";
 import {
   Video, Square, Upload, CheckCircle, Loader2,
@@ -267,7 +279,7 @@ export function VideoRecorder({ onVideoReady }: VideoRecorderProps) {
       for (const part of parts) {
         const start = (part.partNumber - 1) * chunkSize;
         const chunk = blob.slice(start, Math.min(start + chunkSize, blob.size));
-        const res = await fetch(part.url, { method: "PUT", body: chunk, headers: { "Content-Type": "video/webm" } });
+        const res = await fetch(fixMinioUrl(part.url), { method: "PUT", body: chunk, headers: { "Content-Type": "video/webm" } });
         const eTag = (res.headers.get("ETag") ?? `"${part.partNumber}"`).replace(/"/g, "");
         completedParts.push({ partNumber: part.partNumber, eTag });
         setProgress(Math.round((part.partNumber / parts.length) * 100));

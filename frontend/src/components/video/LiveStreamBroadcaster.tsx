@@ -1,10 +1,19 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Video, Square, Loader2, Wifi, WifiOff, Camera, Monitor } from "lucide-react";
 import { toast } from "sonner";
+
+/* Fix WebSocket URL so the browser connects to the real server hostname */
+function fixWsUrl(url: string): string {
+  if (typeof window === "undefined") return url;
+  try {
+    const parsed = new URL(url);
+    const currentHost = window.location.hostname;
+    if (parsed.hostname !== currentHost) parsed.hostname = currentHost;
+    return parsed.toString();
+  } catch { return url; }
+}
 
 interface LiveStreamBroadcasterProps {
   streamId: string;
@@ -15,6 +24,15 @@ interface LiveStreamBroadcasterProps {
 
 type BroadcastState = "idle" | "connecting" | "live" | "ended" | "error";
 
+const S = {
+  rose: "#D4437C",
+  roseDark: "#8B1A42",
+  border: "#EDCFDE",
+  ink: "#1A0A12",
+  muted: "#8B6676",
+  white: "#FFFFFF",
+};
+
 export function LiveStreamBroadcaster({ streamId, apiBaseUrl, onStarted, onEnded }: LiveStreamBroadcasterProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -23,12 +41,9 @@ export function LiveStreamBroadcaster({ streamId, apiBaseUrl, onStarted, onEnded
   const [state, setState] = useState<BroadcastState>("idle");
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval>>(null);
-  const [source, setSource] = useState<"camera" | "screen">("camera");
 
   useEffect(() => {
-    return () => {
-      cleanup();
-    };
+    return () => { cleanup(); };
   }, []);
 
   const cleanup = () => {
@@ -45,7 +60,6 @@ export function LiveStreamBroadcaster({ streamId, apiBaseUrl, onStarted, onEnded
   const startBroadcast = async (src: "camera" | "screen") => {
     setState("connecting");
     try {
-      // Get media stream
       let stream: MediaStream;
       if (src === "camera") {
         stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
@@ -61,13 +75,13 @@ export function LiveStreamBroadcaster({ streamId, apiBaseUrl, onStarted, onEnded
         videoRef.current.play();
       }
 
-      // Connect WebSocket
-      const wsUrl = `${apiBaseUrl.replace(/^http/, "ws")}/api/streams/${streamId}/broadcast`;
+      // Build WebSocket URL with runtime hostname correction
+      const rawWsUrl = `${apiBaseUrl.replace(/^http/, "ws")}/api/streams/${streamId}/broadcast`;
+      const wsUrl = fixWsUrl(rawWsUrl);
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
 
       ws.onopen = () => {
-        // Start MediaRecorder once WS is open
         const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp9,opus")
           ? "video/webm;codecs=vp9,opus"
           : "video/webm";
@@ -81,10 +95,9 @@ export function LiveStreamBroadcaster({ streamId, apiBaseUrl, onStarted, onEnded
           }
         };
 
-        recorder.start(250); // Chunk every 250ms for low-latency
+        recorder.start(250);
         setState("live");
         onStarted?.();
-
         setElapsedSeconds(0);
         timerRef.current = setInterval(() => setElapsedSeconds(s => s + 1), 1000);
         toast.success("Transmissão iniciada!");
@@ -97,12 +110,10 @@ export function LiveStreamBroadcaster({ streamId, apiBaseUrl, onStarted, onEnded
       };
 
       ws.onclose = () => {
-        if (state === "live") {
-          setState("ended");
-        }
+        if (state === "live") setState("ended");
       };
 
-    } catch (err) {
+    } catch {
       setState("error");
       toast.error("Não foi possível acessar câmera/tela");
     }
@@ -119,91 +130,129 @@ export function LiveStreamBroadcaster({ streamId, apiBaseUrl, onStarted, onEnded
     `${Math.floor(s / 3600).toString().padStart(2, "0")}:${Math.floor((s % 3600) / 60).toString().padStart(2, "0")}:${(s % 60).toString().padStart(2, "0")}`;
 
   return (
-    <div className="space-y-4">
-      {/* Preview */}
-      <div className="aspect-video bg-black rounded-xl overflow-hidden relative">
-        <video ref={videoRef} className="w-full h-full object-cover" muted playsInline />
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}} @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}`}</style>
+
+      {/* Video preview */}
+      <div style={{ aspectRatio: "16/9", background: "#000", borderRadius: 14, overflow: "hidden", position: "relative" }}>
+        <video ref={videoRef} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} muted playsInline />
+
         {state === "idle" && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Video className="size-16 text-white/20" />
+          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Video size={56} color="rgba(255,255,255,0.15)" />
           </div>
         )}
         {state === "connecting" && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-            <div className="text-center text-white">
-              <Loader2 className="size-10 animate-spin mx-auto mb-2" />
-              <p className="text-sm">Conectando...</p>
+          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.5)" }}>
+            <div style={{ textAlign: "center", color: "white" }}>
+              <Loader2 size={36} style={{ animation: "spin 1s linear infinite", margin: "0 auto 8px" }} />
+              <p style={{ fontSize: 13 }}>Conectando...</p>
             </div>
           </div>
         )}
         {state === "live" && (
-          <div className="absolute top-4 left-4 flex items-center gap-2 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold">
-            <div className="size-2 rounded-full bg-white animate-pulse" />
+          <div style={{
+            position: "absolute", top: 12, left: 12,
+            display: "flex", alignItems: "center", gap: 6,
+            background: "#ef4444", color: "white",
+            padding: "4px 12px", borderRadius: 100,
+            fontSize: 12, fontWeight: 700,
+          }}>
+            <div style={{ width: 7, height: 7, borderRadius: "50%", background: "white", animation: "pulse 1s infinite" }} />
             AO VIVO {formatTime(elapsedSeconds)}
           </div>
         )}
         {state === "ended" && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/70">
-            <p className="text-white text-lg font-bold">Transmissão encerrada</p>
+          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.7)" }}>
+            <p style={{ color: "white", fontSize: 16, fontWeight: 700 }}>Transmissão encerrada</p>
           </div>
         )}
         {state === "error" && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/70">
-            <div className="text-center text-red-400">
-              <WifiOff className="size-12 mx-auto mb-2" />
-              <p className="font-bold">Erro na transmissão</p>
-            </div>
+          <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.7)" }}>
+            <WifiOff size={40} color="#ef4444" style={{ marginBottom: 8 }} />
+            <p style={{ color: "#ef4444", fontWeight: 700 }}>Erro na transmissão</p>
           </div>
         )}
       </div>
 
       {/* Controls */}
       {state === "idle" && (
-        <div className="grid grid-cols-2 gap-2">
-          <Button onClick={() => { setSource("camera"); startBroadcast("camera"); }} className="gap-2">
-            <Camera className="size-4" /> Câmera ao vivo
-          </Button>
-          <Button variant="outline" onClick={() => { setSource("screen"); startBroadcast("screen"); }} className="gap-2">
-            <Monitor className="size-4" /> Tela ao vivo
-          </Button>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          <button
+            onClick={() => startBroadcast("camera")}
+            style={{
+              display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7,
+              padding: "10px", borderRadius: 10, border: "none",
+              background: `linear-gradient(135deg, ${S.rose}, ${S.roseDark})`,
+              color: S.white, fontSize: 13, fontWeight: 700,
+              cursor: "pointer", fontFamily: "inherit",
+              boxShadow: "0 3px 12px rgba(212,67,124,0.3)",
+            }}
+          >
+            <Camera size={16} /> Câmera ao vivo
+          </button>
+          <button
+            onClick={() => startBroadcast("screen")}
+            style={{
+              display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7,
+              padding: "10px", borderRadius: 10,
+              border: `1.5px solid ${S.border}`, background: S.white,
+              color: S.ink, fontSize: 13, fontWeight: 700,
+              cursor: "pointer", fontFamily: "inherit",
+            }}
+          >
+            <Monitor size={16} /> Tela ao vivo
+          </button>
         </div>
       )}
 
       {state === "connecting" && (
-        <Button disabled className="w-full gap-2">
-          <Loader2 className="size-4 animate-spin" /> Conectando...
-        </Button>
+        <button disabled style={{
+          width: "100%", padding: "11px", borderRadius: 10, border: "none",
+          background: "#d0bbc5", color: "white", fontSize: 14, fontWeight: 700,
+          cursor: "not-allowed", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+          fontFamily: "inherit",
+        }}>
+          <Loader2 size={15} style={{ animation: "spin 1s linear infinite" }} /> Conectando...
+        </button>
       )}
 
       {state === "live" && (
-        <Button onClick={stopBroadcast} variant="destructive" className="w-full gap-2">
-          <Square className="size-4" /> Encerrar transmissão
-        </Button>
+        <button
+          onClick={stopBroadcast}
+          style={{
+            width: "100%", padding: "11px", borderRadius: 10, border: "none",
+            background: "#ef4444", color: "white", fontSize: 14, fontWeight: 700,
+            cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+            fontFamily: "inherit",
+          }}
+        >
+          <Square size={15} fill="white" /> Encerrar transmissão
+        </button>
       )}
 
       {(state === "ended" || state === "error") && (
-        <Button onClick={() => setState("idle")} variant="outline" className="w-full">
+        <button
+          onClick={() => setState("idle")}
+          style={{
+            width: "100%", padding: "11px", borderRadius: 10,
+            border: `1.5px solid ${S.border}`, background: S.white,
+            color: S.ink, fontSize: 14, fontWeight: 700,
+            cursor: "pointer", fontFamily: "inherit",
+          }}
+        >
           Nova transmissão
-        </Button>
+        </button>
       )}
 
       {/* Status indicator */}
-      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+      <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: S.muted }}>
         {state === "live" ? (
-          <>
-            <Wifi className="size-3 text-green-500" />
-            <span className="text-green-500">Transmitindo via WebSocket → FFmpeg → RTMP</span>
-          </>
+          <><Wifi size={12} color="#16a34a" /><span style={{ color: "#16a34a" }}>Transmitindo via WebSocket → FFmpeg → RTMP</span></>
         ) : state === "connecting" ? (
-          <>
-            <Loader2 className="size-3 animate-spin" />
-            <span>Iniciando pipeline de transmissão...</span>
-          </>
+          <><Loader2 size={12} style={{ animation: "spin 1s linear infinite" }} /><span>Iniciando pipeline de transmissão...</span></>
         ) : (
-          <>
-            <WifiOff className="size-3" />
-            <span>Aguardando início</span>
-          </>
+          <><WifiOff size={12} /><span>Aguardando início</span></>
         )}
       </div>
     </div>
