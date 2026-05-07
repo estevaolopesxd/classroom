@@ -133,6 +133,22 @@ public class MinIOStorageService
         return $"{publicEndpoint}/{bucket}/{objectKey}";
     }
 
+    /// <summary>
+    /// Download an object from MinIO using the internal S3 client (Docker-network safe).
+    /// Use this server-side; never expose the stream to the browser.
+    /// </summary>
+    public async Task<byte[]> DownloadObjectAsync(string bucket, string objectKey)
+    {
+        var response = await _client.GetObjectAsync(new Amazon.S3.Model.GetObjectRequest
+        {
+            BucketName = bucket,
+            Key = objectKey
+        });
+        using var ms = new MemoryStream();
+        await response.ResponseStream.CopyToAsync(ms);
+        return ms.ToArray();
+    }
+
     public async Task DeleteObject(string bucket, string objectKey)
     {
         await _client.DeleteObjectAsync(new DeleteObjectRequest

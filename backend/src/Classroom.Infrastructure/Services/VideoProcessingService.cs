@@ -52,10 +52,9 @@ public class VideoProcessingService(
             var bucket = configuration["MinIO:BucketVideos"]!;
             var originalLocalPath = Path.Combine(tempDir, "original");
 
-            // Download original file from MinIO
-            var downloadUrl = storage.GeneratePresignedGetUrl(bucket, video.OriginalKey!, 600);
-            using var httpClient = new HttpClient();
-            var fileBytes = await httpClient.GetByteArrayAsync(downloadUrl, ct);
+            // Download original file from MinIO using internal S3 client
+            // (presigned URLs use localhost:9000 which is wrong inside Docker)
+            var fileBytes = await storage.DownloadObjectAsync(bucket, video.OriginalKey!);
             await File.WriteAllBytesAsync(originalLocalPath, fileBytes, ct);
 
             // Transcode to HLS with FFmpeg
