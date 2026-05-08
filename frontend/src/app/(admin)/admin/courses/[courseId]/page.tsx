@@ -11,6 +11,7 @@ import { VideoTutorial } from "@/components/video/VideoTutorial";
 import {
   ArrowLeft, Plus, Trash2, GripVertical, ChevronDown, ChevronRight,
   Loader2, Eye, EyeOff, BookOpen, Video, FileText, Save, DollarSign, Play,
+  ImagePlus,
 } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -209,6 +210,7 @@ export default function CourseEditorPage() {
   const [activeTab, setActiveTab] = useState<"content" | "info" | "sale">("content");
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
 
+  const [thumbnailUploading, setThumbnailUploading] = useState(false);
   const [courseForm, setCourseForm] = useState({ title: "", description: "", shortDescription: "", level: "", price: "" });
   const [saleEnabled, setSaleEnabled] = useState(false);
   const [saleLoading, setSaleLoading] = useState(false);
@@ -604,6 +606,68 @@ export default function CourseEditorPage() {
           background: S.white, borderRadius: 16, border: `1px solid ${S.border}`, padding: 28,
           display: "flex", flexDirection: "column", gap: 20,
         }}>
+          {/* Thumbnail */}
+          <div>
+            <label style={labelStyle}>Capa do curso</label>
+            <div
+              style={{
+                width: "100%", aspectRatio: "16/9", maxWidth: 320,
+                borderRadius: 12, overflow: "hidden", position: "relative",
+                border: `2px dashed ${S.border}`,
+                background: course?.thumbnailUrl ? "transparent" : S.bg,
+                cursor: thumbnailUploading ? "wait" : "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}
+              onClick={() => !thumbnailUploading && document.getElementById("thumb-input")?.click()}
+            >
+              {course?.thumbnailUrl
+                ? <img src={course.thumbnailUrl} alt="capa" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                : <div style={{ textAlign: "center", color: S.muted }}>
+                    <ImagePlus size={28} style={{ margin: "0 auto 8px" }} />
+                    <p style={{ fontSize: 13, margin: 0 }}>Clique para adicionar capa</p>
+                    <p style={{ fontSize: 11, margin: "4px 0 0" }}>JPEG, PNG, WebP — máx. 5MB</p>
+                  </div>
+              }
+              {thumbnailUploading && (
+                <div style={{ position: "absolute", inset: 0, background: "rgba(255,255,255,0.8)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Loader2 size={28} color={S.rose} style={{ animation: "spin 1s linear infinite" }} />
+                </div>
+              )}
+              {course?.thumbnailUrl && !thumbnailUploading && (
+                <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0)", display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.2s" }}
+                  onMouseEnter={e => (e.currentTarget.style.background = "rgba(0,0,0,0.4)")}
+                  onMouseLeave={e => (e.currentTarget.style.background = "rgba(0,0,0,0)")}
+                >
+                  <span style={{ color: "white", fontSize: 13, fontWeight: 700, opacity: 0, transition: "opacity 0.2s" }}
+                    onMouseEnter={e => (e.currentTarget.style.opacity = "1")}
+                    onMouseLeave={e => (e.currentTarget.style.opacity = "0")}
+                  >Trocar imagem</span>
+                </div>
+              )}
+            </div>
+            <input
+              id="thumb-input"
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              style={{ display: "none" }}
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file || !courseId) return;
+                setThumbnailUploading(true);
+                try {
+                  const updated = await coursesApi.uploadThumbnail(courseId as string, file);
+                  setCourse(prev => prev ? { ...prev, thumbnailUrl: updated.thumbnailUrl } : prev);
+                  toast.success("Capa atualizada!");
+                } catch {
+                  toast.error("Erro ao enviar capa");
+                } finally {
+                  setThumbnailUploading(false);
+                  e.target.value = "";
+                }
+              }}
+            />
+          </div>
+
           <div>
             <label style={labelStyle}>Título</label>
             <input value={courseForm.title} onChange={e => setCourseForm(f => ({ ...f, title: e.target.value }))} style={inputStyle} />

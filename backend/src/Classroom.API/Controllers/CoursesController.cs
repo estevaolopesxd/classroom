@@ -13,7 +13,7 @@ namespace Classroom.API.Controllers;
 
 [ApiController]
 [Route("api/courses")]
-public class CoursesController(AppDbContext db, StripeService stripe) : ControllerBase
+public class CoursesController(AppDbContext db, StripeService stripe, MinIOStorageService storage, IConfiguration configuration) : ControllerBase
 {
     private Guid CurrentUserId => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
@@ -261,6 +261,35 @@ public class CoursesController(AppDbContext db, StripeService stripe) : Controll
                     }).ToList());
             }).ToList()
         ));
+    }
+
+    [HttpPost("{id:guid}/thumbnail")]
+    [Authorize(Roles = "Admin")]
+    [RequestSizeLimit(5 * 1024 * 1024)] // 5MB
+    public async Task<ActionResult<CourseDto>> UploadThumbnail(Guid id, IFormFile file)
+    {
+        if (file is null || file.Length == 0)
+            return BadRequest(new { message = "Arquivo inválido" });
+
+        var allowed = new[] { "image/jpeg", "image/png", "image/webp", "image/gif" };
+        if (!allowed.Contains(file.ContentType.ToLower()))
+            return BadRequest(new { message = "Formato não suportado. Use JPEG, PNG, WebP ou GIF." });
+
+        var course = await db.Courses.FindAsync(id);
+        if (course is null) return NotFound();
+
+        var ext = Path.GetExtension(file.FileName).ToLower();
+        var objectKey = $"courses/{id}/thumbnail{ext}";
+        var bucket = configuration["MinIO:BucketThumbnails"]!;
+
+        using var stream = file.OpenReadStream();
+        await storage.PutObjectAsync(bucket, objectKey, stream, file.ContentType);
+
+        // Public URL (thumbnails bucket is already public)
+        course.ThumbnailUrl = await storage.GetPublicUrl(bucket, objectKey);
+        await db.SaveChangesAsync();
+
+        return Ok(MapDto(course));
     }
 
     private static string GenerateSlug(string title)

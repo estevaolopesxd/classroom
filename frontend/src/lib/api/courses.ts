@@ -41,6 +41,14 @@ export const coursesApi = {
   getProgress: (id: string) =>
     api.get(`/api/courses/${id}/progress`).then((r) => r.data),
 
+  uploadThumbnail: (id: string, file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return api.post<Course>(`/api/courses/${id}/thumbnail`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    }).then((r) => r.data);
+  },
+
   // Modules
   getModules: (courseId: string) =>
     api.get<Module[]>(`/api/courses/${courseId}/modules`).then((r) => r.data),
