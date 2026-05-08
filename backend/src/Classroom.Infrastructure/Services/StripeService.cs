@@ -44,10 +44,10 @@ public class StripeService(IConfiguration configuration)
 
     public async Task<Session> CreateCheckoutSessionAsync(
         string priceId, string customerEmail, string userId, string courseId,
-        string successUrl, string cancelUrl)
+        string successUrl, string cancelUrl, string? stripeCouponId = null)
     {
-        var service = new SessionService(CreateClient());
-        return await service.CreateAsync(new SessionCreateOptions
+        var client = CreateClient();
+        var options = new SessionCreateOptions
         {
             Mode = "payment",
             CustomerEmail = customerEmail,
@@ -66,7 +66,46 @@ public class StripeService(IConfiguration configuration)
                 ["userId"] = userId,
                 ["courseId"] = courseId
             }
+        };
+
+        if (!string.IsNullOrEmpty(stripeCouponId))
+        {
+            options.Discounts =
+            [
+                new SessionDiscountOptions { Coupon = stripeCouponId }
+            ];
+        }
+
+        var service = new SessionService(client);
+        return await service.CreateAsync(options);
+    }
+
+    /// <summary>
+    /// Creates a percentage-off coupon on Stripe (idempotent — uses coupon GUID as idempotency key).
+    /// </summary>
+    public async Task<string> CreateOrGetCouponAsync(string couponId, decimal discountPercent)
+    {
+        var client = CreateClient();
+        var service = new CouponService(client);
+
+        // Try to retrieve existing first (by idempotency: we use couponId as the Stripe coupon ID)
+        try
+        {
+            var existing = await service.GetAsync(couponId);
+            return existing.Id;
+        }
+        catch (StripeException ex) when (ex.StripeError?.Code == "resource_missing")
+        {
+            // Not found — create it
+        }
+
+        var coupon = await service.CreateAsync(new CouponCreateOptions
+        {
+            Id = couponId,
+            PercentOff = discountPercent,
+            Duration = "once"
         });
+        return coupon.Id;
     }
 
     public Event ConstructWebhookEvent(string json, string signature)

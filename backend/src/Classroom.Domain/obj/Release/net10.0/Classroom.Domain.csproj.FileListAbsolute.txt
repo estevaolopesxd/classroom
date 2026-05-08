@@ -9,3 +9,4 @@ C:\Desenvolvimento\Classroom\backend\src\Classroom.Domain\obj\Release\net10.0\Cl
 C:\Desenvolvimento\Classroom\backend\src\Classroom.Domain\obj\Release\net10.0\refint\Classroom.Domain.dll
 C:\Desenvolvimento\Classroom\backend\src\Classroom.Domain\obj\Release\net10.0\Classroom.Domain.pdb
 C:\Desenvolvimento\Classroom\backend\src\Classroom.Domain\obj\Release\net10.0\ref\Classroom.Domain.dll
+C:\Desenvolvimento\Classroom\backend\src\Classroom.Domain\obj\Release\net10.0\Classroom.Domain.sourcelink.json

@@ -149,3 +149,4 @@ C:\Desenvolvimento\Classroom\backend\src\Classroom.API\obj\Debug\net10.0\refint\
 C:\Desenvolvimento\Classroom\backend\src\Classroom.API\obj\Debug\net10.0\Classroom.API.pdb
 C:\Desenvolvimento\Classroom\backend\src\Classroom.API\obj\Debug\net10.0\Classroom.API.genruntimeconfig.cache
 C:\Desenvolvimento\Classroom\backend\src\Classroom.API\obj\Debug\net10.0\ref\Classroom.API.dll
+C:\Desenvolvimento\Classroom\backend\src\Classroom.API\obj\Debug\net10.0\Classroom.API.sourcelink.json

@@ -22,6 +22,57 @@ namespace Classroom.Infrastructure.Data.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Classroom.Domain.Entities.Coupon", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid?>("CourseId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedById")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("DiscountPercent")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("numeric(5,2)");
+
+                    b.Property<DateTime?>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<int?>("MaxUses")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("UsedCount")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("CourseId");
+
+                    b.HasIndex("CreatedById");
+
+                    b.ToTable("Coupons");
+                });
+
             modelBuilder.Entity("Classroom.Domain.Entities.Course", b =>
                 {
                     b.Property<Guid>("Id")
@@ -330,6 +381,12 @@ namespace Classroom.Infrastructure.Data.Migrations
                         .HasPrecision(10, 2)
                         .HasColumnType("numeric(10,2)");
 
+                    b.Property<string>("CouponCode")
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("CouponId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("CourseId")
                         .HasColumnType("uuid");
 
@@ -340,6 +397,9 @@ namespace Classroom.Infrastructure.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(3)
                         .HasColumnType("character varying(3)");
+
+                    b.Property<decimal?>("DiscountPercent")
+                        .HasColumnType("numeric");
 
                     b.Property<DateTime?>("PurchasedAt")
                         .HasColumnType("timestamp with time zone");
@@ -364,6 +424,8 @@ namespace Classroom.Infrastructure.Data.Migrations
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CouponId");
 
                     b.HasIndex("CourseId");
 
@@ -572,6 +634,24 @@ namespace Classroom.Infrastructure.Data.Migrations
                     b.ToTable("Videos");
                 });
 
+            modelBuilder.Entity("Classroom.Domain.Entities.Coupon", b =>
+                {
+                    b.HasOne("Classroom.Domain.Entities.Course", "Course")
+                        .WithMany()
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Classroom.Domain.Entities.User", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Course");
+
+                    b.Navigation("CreatedBy");
+                });
+
             modelBuilder.Entity("Classroom.Domain.Entities.Course", b =>
                 {
                     b.HasOne("Classroom.Domain.Entities.User", "CreatedBy")
@@ -684,6 +764,10 @@ namespace Classroom.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("Classroom.Domain.Entities.Purchase", b =>
                 {
+                    b.HasOne("Classroom.Domain.Entities.Coupon", "Coupon")
+                        .WithMany()
+                        .HasForeignKey("CouponId");
+
                     b.HasOne("Classroom.Domain.Entities.Course", "Course")
                         .WithMany("Purchases")
                         .HasForeignKey("CourseId")
@@ -695,6 +779,8 @@ namespace Classroom.Infrastructure.Data.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Coupon");
 
                     b.Navigation("Course");
 

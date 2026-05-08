@@ -17,3 +17,4 @@ C:\Desenvolvimento\Classroom\backend\src\Classroom.Infrastructure\obj\Release\ne
 C:\Desenvolvimento\Classroom\backend\src\Classroom.Infrastructure\obj\Release\net10.0\Classroom.Infrastructure.pdb
 C:\Desenvolvimento\Classroom\backend\src\Classroom.Infrastructure\obj\Release\net10.0\Classroom.Infrastructure.genruntimeconfig.cache
 C:\Desenvolvimento\Classroom\backend\src\Classroom.Infrastructure\obj\Release\net10.0\ref\Classroom.Infrastructure.dll
+C:\Desenvolvimento\Classroom\backend\src\Classroom.Infrastructure\obj\Release\net10.0\Classroom.Infrastructure.sourcelink.json

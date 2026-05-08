@@ -1,8 +1,8 @@
 namespace Classroom.Application.DTOs;
 
-public record CreateCheckoutRequest(Guid CourseId);
+public record CreateCheckoutRequest(Guid CourseId, string? CouponCode = null);
 
-public record CheckoutResponse(string CheckoutUrl, string SessionId);
+public record CheckoutResponse(string? CheckoutUrl, string? SessionId, bool IsFree = false);
 
 public record PurchaseDto(
     Guid Id,

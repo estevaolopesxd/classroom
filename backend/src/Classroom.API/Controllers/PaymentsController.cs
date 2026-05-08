@@ -22,12 +22,9 @@ public class PaymentsController(AppDbContext db, StripeService stripe, IConfigur
         var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         var userEmail = User.FindFirstValue(ClaimTypes.Email)!;
 
-        if (!stripe.IsConfigured)
-            return BadRequest(new { message = "Pagamentos não configurados. Configure as chaves Stripe no servidor." });
-
         var course = await db.Courses.FindAsync(request.CourseId);
         if (course is null) return NotFound();
-        if (!course.IsForSale || string.IsNullOrEmpty(course.StripePriceId))
+        if (!course.IsForSale || !course.Price.HasValue || course.Price.Value <= 0)
             return BadRequest(new { message = "Este curso não está disponível para venda" });
 
         var isEnrolled = await db.CourseEnrollments
@@ -35,24 +32,97 @@ public class PaymentsController(AppDbContext db, StripeService stripe, IConfigur
         if (isEnrolled)
             return Conflict(new { message = "Você já está inscrito neste curso" });
 
-        var frontendUrl = configuration["Cors:Origins"] ?? "http://localhost:3000";
+        // ── Resolver cupom ──────────────────────────────────────────────────
+        Coupon? coupon = null;
+        if (!string.IsNullOrWhiteSpace(request.CouponCode))
+        {
+            var code = request.CouponCode.Trim().ToUpper();
+            coupon = await db.Coupons.FirstOrDefaultAsync(c =>
+                c.Code == code && c.IsActive &&
+                (c.ExpiresAt == null || c.ExpiresAt > DateTime.UtcNow) &&
+                (c.MaxUses == null || c.UsedCount < c.MaxUses) &&
+                (c.CourseId == null || c.CourseId == request.CourseId));
+
+            if (coupon is null)
+                return BadRequest(new { message = "Cupom inválido, inativo ou expirado." });
+        }
+
+        var originalPrice = course.Price.Value;
+        var discount = coupon is not null
+            ? Math.Round(originalPrice * coupon.DiscountPercent / 100, 2)
+            : 0m;
+        var finalPrice = Math.Max(0, originalPrice - discount);
+
+        // ── Cupom 100%: inscrição gratuita direta ───────────────────────────
+        if (finalPrice == 0)
+        {
+            db.CourseEnrollments.Add(new CourseEnrollment
+            {
+                UserId = userId,
+                CourseId = course.Id,
+                Source = EnrollmentSource.Free
+            });
+
+            var freePurchase = new Purchase
+            {
+                UserId = userId,
+                CourseId = course.Id,
+                Amount = 0,
+                Currency = course.Currency,
+                Status = PurchaseStatus.Completed,
+                PurchasedAt = DateTime.UtcNow,
+                CouponId = coupon!.Id,
+                CouponCode = coupon.Code,
+                DiscountPercent = coupon.DiscountPercent
+            };
+            db.Purchases.Add(freePurchase);
+
+            coupon.UsedCount++;
+            await db.SaveChangesAsync();
+
+            return Ok(new CheckoutResponse(null, null, true));
+        }
+
+        // ── Checkout via Stripe ─────────────────────────────────────────────
+        if (!stripe.IsConfigured)
+            return BadRequest(new { message = "Pagamentos não configurados. Configure as chaves Stripe no servidor." });
+
+        if (string.IsNullOrEmpty(course.StripePriceId))
+            return BadRequest(new { message = "Este curso não possui preço configurado no Stripe." });
+
+        var frontendUrl = configuration["AllowedOrigins__0"] ?? "http://localhost:3002";
+
+        // Se há desconto, criamos um coupon no Stripe e passamos para a sessão
+        string? stripeCouponId = null;
+        if (coupon is not null)
+            stripeCouponId = await stripe.CreateOrGetCouponAsync(coupon.Id.ToString(), coupon.DiscountPercent);
+
         var session = await stripe.CreateCheckoutSessionAsync(
             course.StripePriceId, userEmail,
             userId.ToString(), course.Id.ToString(),
             $"{frontendUrl}/checkout/success?session_id={{CHECKOUT_SESSION_ID}}",
-            $"{frontendUrl}/checkout/cancel"
+            $"{frontendUrl}/checkout/cancel",
+            stripeCouponId
         );
 
         var purchase = new Purchase
         {
             UserId = userId,
             CourseId = course.Id,
-            Amount = course.Price!.Value,
+            Amount = finalPrice,
             Currency = course.Currency,
             StripeSessionId = session.Id,
-            Status = PurchaseStatus.Pending
+            Status = PurchaseStatus.Pending,
+            CouponId = coupon?.Id,
+            CouponCode = coupon?.Code,
+            DiscountPercent = coupon?.DiscountPercent
         };
         db.Purchases.Add(purchase);
+
+        // Reserva o uso do cupom — confirma ao receber webhook
+        if (coupon is not null)
+            coupon.UsedCount++;
+
         await db.SaveChangesAsync();
 
         return Ok(new CheckoutResponse(session.Url, session.Id));

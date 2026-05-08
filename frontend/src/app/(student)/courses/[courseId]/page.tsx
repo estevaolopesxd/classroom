@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { coursesApi } from "@/lib/api/courses";
 import { paymentsApi } from "@/lib/api/payments";
+import { couponsApi, type ValidateCouponResponse } from "@/lib/api/coupons";
 import { useAuthStore } from "@/lib/stores/authStore";
 import type { CourseDetail } from "@/types";
-import { BookOpen, Play, Lock, CheckCircle, Loader2, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
+import { BookOpen, Play, Lock, CheckCircle, Loader2, ChevronLeft, ChevronRight, ChevronDown, Tag, X } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
 
@@ -19,7 +20,13 @@ const S = {
   muted: "#8B6676",
   border: "#EDCFDE",
   green: "#16a34a",
+  greenBg: "rgba(22,163,74,0.08)",
+  red: "#dc2626",
+  redBg: "rgba(220,38,38,0.08)",
 };
+
+const fmt = (val: number, currency = "BRL") =>
+  new Intl.NumberFormat("pt-BR", { style: "currency", currency }).format(val);
 
 export default function CourseDetailPage() {
   const { courseId } = useParams<{ courseId: string }>();
@@ -31,6 +38,12 @@ export default function CourseDetailPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
 
+  // Coupon state
+  const [couponCode, setCouponCode] = useState("");
+  const [couponValidating, setCouponValidating] = useState(false);
+  const [couponResult, setCouponResult] = useState<ValidateCouponResponse | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
     Promise.all([
       coursesApi.getById(courseId),
@@ -39,7 +52,6 @@ export default function CourseDetailPage() {
       .then(([c, myCourses]) => {
         setCourse(c);
         setIsEnrolled((myCourses as { id: string }[]).some((mc) => mc.id === courseId));
-        // Expand first module by default
         if (c.modules?.length) setExpandedModules(new Set([c.modules[0].id]));
       })
       .catch(() => router.push("/courses"))
@@ -47,8 +59,35 @@ export default function CourseDetailPage() {
   }, [courseId, isAuthenticated, router]);
 
   const isFree = !course?.isForSale || !course?.price || course.price === 0;
-
   const firstLessonId = course?.modules.flatMap((m) => m.lessons)[0]?.id;
+
+  // Validate coupon with debounce
+  const handleCouponChange = (value: string) => {
+    const upper = value.toUpperCase();
+    setCouponCode(upper);
+    setCouponResult(null);
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (!upper.trim() || upper.length < 4) return;
+
+    debounceRef.current = setTimeout(async () => {
+      setCouponValidating(true);
+      try {
+        const result = await couponsApi.validate(upper.trim(), courseId);
+        setCouponResult(result);
+      } catch {
+        setCouponResult(null);
+      } finally {
+        setCouponValidating(false);
+      }
+    }, 600);
+  };
+
+  const clearCoupon = () => {
+    setCouponCode("");
+    setCouponResult(null);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+  };
 
   const handleAction = async () => {
     if (!isAuthenticated) {
@@ -67,17 +106,30 @@ export default function CourseDetailPage() {
         setIsEnrolled(true);
         if (firstLessonId) router.push(`/courses/${courseId}/learn/${firstLessonId}`);
       } else {
-        const { checkoutUrl } = await paymentsApi.createCheckout(courseId);
-        window.location.href = checkoutUrl;
+        const appliedCode = couponResult?.valid ? couponCode.trim() : undefined;
+        const result = await paymentsApi.createCheckout(courseId, appliedCode);
+        if (result.isFree) {
+          toast.success("Cupom de 100%! Acesso liberado gratuitamente 🎉");
+          setIsEnrolled(true);
+          if (firstLessonId) router.push(`/courses/${courseId}/learn/${firstLessonId}`);
+        } else if (result.checkoutUrl) {
+          window.location.href = result.checkoutUrl;
+        }
       }
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Erro ao acessar curso");
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast.error(msg || "Erro ao acessar curso");
     } finally {
       setActionLoading(false);
     }
   };
 
   const totalLessons = course?.modules.reduce((acc, m) => acc + m.lessons.length, 0) ?? 0;
+
+  // Pricing with coupon
+  const basePrice = course?.price ?? 0;
+  const displayPrice = couponResult?.valid ? couponResult.finalPrice : basePrice;
+  const currency = course?.currency || "BRL";
 
   if (loading) return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "60vh" }}>
@@ -231,13 +283,97 @@ export default function CourseDetailPage() {
             {isEnrolled ? (
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <CheckCircle size={20} color={S.green} />
-                <span style={{ fontSize: 15, fontWeight: 700, color: S.green }}>Você está inscrito!</span>
+                <span style={{ fontSize: 15, fontWeight: 700, color: S.green }}>Você está inscrita!</span>
               </div>
             ) : isFree ? (
               <div style={{ fontSize: 26, fontWeight: 800, color: S.green }}>Gratuito</div>
             ) : (
-              <div style={{ fontSize: 28, fontWeight: 800, color: S.ink }}>
-                {new Intl.NumberFormat("pt-BR", { style: "currency", currency: course.currency || "BRL" }).format(course.price!)}
+              <div>
+                {/* Original price */}
+                {couponResult?.valid && (
+                  <div style={{ fontSize: 14, color: S.muted, textDecoration: "line-through", marginBottom: 2 }}>
+                    {fmt(basePrice, currency)}
+                  </div>
+                )}
+                {/* Final price */}
+                <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                  <span style={{ fontSize: 28, fontWeight: 800, color: couponResult?.valid ? S.green : S.ink }}>
+                    {fmt(displayPrice, currency)}
+                  </span>
+                  {couponResult?.valid && (
+                    <span style={{ fontSize: 13, fontWeight: 700, color: S.green }}>
+                      −{couponResult.discountPercent}%
+                    </span>
+                  )}
+                </div>
+                {couponResult?.valid && (
+                  <div style={{ fontSize: 12, color: S.green, marginTop: 2 }}>
+                    Você economiza {fmt(couponResult.savedAmount, currency)}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Coupon input (only for paid courses, not enrolled) */}
+            {!isEnrolled && !isFree && (
+              <div>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: S.muted, marginBottom: 6 }}>
+                  <Tag size={11} style={{ marginRight: 4, verticalAlign: "middle" }} />
+                  Cupom de desconto
+                </label>
+                <div style={{ position: "relative" }}>
+                  <input
+                    type="text"
+                    value={couponCode}
+                    onChange={(e) => handleCouponChange(e.target.value)}
+                    placeholder="Ex: ABCD-1234"
+                    maxLength={20}
+                    style={{
+                      width: "100%",
+                      padding: "9px 36px 9px 12px",
+                      border: `1.5px solid ${
+                        couponResult?.valid ? S.green
+                        : couponResult && !couponResult.valid ? S.red
+                        : S.border
+                      }`,
+                      borderRadius: 9,
+                      fontSize: 14,
+                      fontFamily: "monospace",
+                      letterSpacing: 1,
+                      background: couponResult?.valid ? S.greenBg : couponResult && !couponResult.valid ? S.redBg : S.white,
+                      color: S.ink,
+                      outline: "none",
+                      boxSizing: "border-box",
+                      textTransform: "uppercase",
+                    }}
+                  />
+                  {/* Spinner or clear */}
+                  <div style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)" }}>
+                    {couponValidating ? (
+                      <Loader2 size={14} color={S.muted} style={{ animation: "spin 1s linear infinite" }} />
+                    ) : couponCode ? (
+                      <button
+                        onClick={clearCoupon}
+                        style={{ background: "none", border: "none", cursor: "pointer", padding: 0, display: "flex" }}
+                      >
+                        <X size={14} color={S.muted} />
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+
+                {/* Coupon feedback */}
+                {couponResult && !couponValidating && (
+                  <div style={{
+                    marginTop: 6, fontSize: 12, fontWeight: 600,
+                    color: couponResult.valid ? S.green : S.red,
+                  }}>
+                    {couponResult.valid
+                      ? `✓ Cupom aplicado: ${couponResult.discountPercent}% de desconto`
+                      : `✗ ${couponResult.message}`
+                    }
+                  </div>
+                )}
               </div>
             )}
 

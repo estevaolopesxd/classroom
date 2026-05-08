@@ -13,3 +13,4 @@ C:\Desenvolvimento\Classroom\backend\src\Classroom.Application\obj\Release\net10
 C:\Desenvolvimento\Classroom\backend\src\Classroom.Application\obj\Release\net10.0\refint\Classroom.Application.dll
 C:\Desenvolvimento\Classroom\backend\src\Classroom.Application\obj\Release\net10.0\Classroom.Application.pdb
 C:\Desenvolvimento\Classroom\backend\src\Classroom.Application\obj\Release\net10.0\ref\Classroom.Application.dll
+C:\Desenvolvimento\Classroom\backend\src\Classroom.Application\obj\Release\net10.0\Classroom.Application.sourcelink.json

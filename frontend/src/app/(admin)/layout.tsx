@@ -7,7 +7,7 @@ import { authApi } from "@/lib/api/auth";
 import { useEffect, useState } from "react";
 import {
   BookOpen, LayoutDashboard, Users, Radio, Settings,
-  LogOut, Home, Menu, X, ChevronRight
+  LogOut, Home, Menu, X, ChevronRight, Tag
 } from "lucide-react";
 
 const LogoIcon = ({ size = 17 }: { size?: number }) => (
@@ -22,6 +22,7 @@ const sidebarItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/admin/courses", label: "Cursos", icon: BookOpen },
   { href: "/admin/users", label: "Alunas", icon: Users },
+  { href: "/admin/coupons", label: "Cupons", icon: Tag },
   { href: "/admin/live", label: "Lives", icon: Radio },
   { href: "/admin/settings", label: "Configurações", icon: Settings },
 ];
