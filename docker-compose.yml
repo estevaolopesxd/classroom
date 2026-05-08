@@ -60,6 +60,7 @@ services:
         mc mb --ignore-existing local/thumbnails &&
         mc mb --ignore-existing local/avatars &&
         mc mb --ignore-existing local/logos &&
+        mc anonymous set download local/videos &&
         mc anonymous set download local/thumbnails &&
         mc anonymous set download local/avatars &&
         mc anonymous set download local/logos &&

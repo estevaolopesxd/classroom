@@ -141,6 +141,16 @@ public class MinIOStorageService
     }
 
     /// <summary>
+    /// Retorna URL pública direta (sem assinatura) para arquivos HLS.
+    /// O bucket precisa ter política de leitura anônima (mc anonymous set download).
+    /// </summary>
+    public string GetPublicHlsUrl(string bucket, string hlsKey)
+    {
+        var publicEndpoint = _configuration["MinIO:PublicEndpoint"]!;
+        return $"{publicEndpoint}/{bucket}/{hlsKey}";
+    }
+
+    /// <summary>
     /// Download an object from MinIO using the internal S3 client (Docker-network safe).
     /// Use this server-side; never expose the stream to the browser.
     /// </summary>

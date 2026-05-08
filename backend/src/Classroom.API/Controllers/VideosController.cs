@@ -149,7 +149,9 @@ public class VideosController(AppDbContext db, MinIOStorageService storage, Vide
             return BadRequest(new { message = "Vídeo ainda não está pronto" });
 
         var bucket = configuration["MinIO:BucketVideos"]!;
-        var url = storage.GeneratePresignedGetUrl(bucket, video.HlsKey!, 3600);
+        // URL direta (bucket público) — presigned URLs não funcionam com HLS.js
+        // pois os segmentos .ts são carregados sem assinaturas
+        var url = storage.GetPublicHlsUrl(bucket, video.HlsKey!);
         return Ok(new { url, hlsKey = video.HlsKey });
     }
 
