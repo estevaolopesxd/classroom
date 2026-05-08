@@ -66,7 +66,9 @@ public class MinIOStorageService
         // Replace internal endpoint with public endpoint for browser access
         if (!string.IsNullOrEmpty(publicEndpoint))
         {
-            url = url.Replace($"http://{endpoint}", publicEndpoint);
+            url = url
+                .Replace($"https://{endpoint}", publicEndpoint)
+                .Replace($"http://{endpoint}", publicEndpoint);
         }
 
         return url;
@@ -122,7 +124,12 @@ public class MinIOStorageService
         });
 
         if (!string.IsNullOrEmpty(publicEndpoint))
-            url = url.Replace($"http://{endpoint}", publicEndpoint);
+        {
+            // O SDK AWS pode gerar https:// ou http:// — substituímos ambos
+            url = url
+                .Replace($"https://{endpoint}", publicEndpoint)
+                .Replace($"http://{endpoint}", publicEndpoint);
+        }
 
         return url;
     }
