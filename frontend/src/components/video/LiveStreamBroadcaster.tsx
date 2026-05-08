@@ -42,7 +42,12 @@ export function LiveStreamBroadcaster({ streamId, apiBaseUrl, onStarted, onEnded
   const [state, setState] = useState<BroadcastState>("idle");
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval>>(null);
-  const accessToken = useAuthStore(s => s.accessToken);
+  // Read token only on client to avoid SSR hydration mismatch
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+  useEffect(() => {
+    const token = useAuthStore.getState().accessToken ?? localStorage.getItem("accessToken");
+    setAccessToken(token);
+  }, []);
 
   useEffect(() => {
     return () => { cleanup(); };
