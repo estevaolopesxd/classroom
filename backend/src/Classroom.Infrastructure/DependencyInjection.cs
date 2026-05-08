@@ -22,6 +22,7 @@ public static class DependencyInjection
         services.AddSingleton<StripeService>();
         services.AddSingleton<VideoProcessingService>();
         services.AddHostedService(sp => sp.GetRequiredService<VideoProcessingService>());
+        services.AddSingleton<CertificatePdfService>();
 
         return services;
     }

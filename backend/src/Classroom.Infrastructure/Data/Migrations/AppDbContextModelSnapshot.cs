@@ -22,6 +22,127 @@ namespace Classroom.Infrastructure.Data.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Classroom.Domain.Entities.Certificate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("CourseDurationMinutes")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("CourseId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CourseName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("IssuedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("StudentName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CourseId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Certificates");
+                });
+
+            modelBuilder.Entity("Classroom.Domain.Entities.CertificateConfig", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("BackgroundColor")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("BackgroundImageUrl")
+                        .HasColumnType("text");
+
+                    b.Property<string>("BodyText")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("CityName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("InstitutionLogoUrl")
+                        .HasColumnType("text");
+
+                    b.Property<string>("InstitutionName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("PrimaryColor")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("SignatureImageUrl")
+                        .HasColumnType("text");
+
+                    b.Property<string>("SignerName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("SignerTitle")
+                        .HasColumnType("text");
+
+                    b.Property<string>("TextColor")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CertificateConfigs");
+                });
+
+            modelBuilder.Entity("Classroom.Domain.Entities.CertificateSponsor", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CertificateConfigId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("LogoUrl")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CertificateConfigId");
+
+                    b.ToTable("CertificateSponsors");
+                });
+
             modelBuilder.Entity("Classroom.Domain.Entities.Coupon", b =>
                 {
                     b.Property<Guid>("Id")
@@ -657,6 +778,36 @@ namespace Classroom.Infrastructure.Data.Migrations
                     b.ToTable("Videos");
                 });
 
+            modelBuilder.Entity("Classroom.Domain.Entities.Certificate", b =>
+                {
+                    b.HasOne("Classroom.Domain.Entities.Course", "Course")
+                        .WithMany()
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Classroom.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Course");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Classroom.Domain.Entities.CertificateSponsor", b =>
+                {
+                    b.HasOne("Classroom.Domain.Entities.CertificateConfig", "CertificateConfig")
+                        .WithMany("Sponsors")
+                        .HasForeignKey("CertificateConfigId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CertificateConfig");
+                });
+
             modelBuilder.Entity("Classroom.Domain.Entities.Coupon", b =>
                 {
                     b.HasOne("Classroom.Domain.Entities.Course", "Course")
@@ -830,6 +981,11 @@ namespace Classroom.Infrastructure.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("UploadedBy");
+                });
+
+            modelBuilder.Entity("Classroom.Domain.Entities.CertificateConfig", b =>
+                {
+                    b.Navigation("Sponsors");
                 });
 
             modelBuilder.Entity("Classroom.Domain.Entities.Course", b =>

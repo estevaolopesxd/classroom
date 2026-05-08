@@ -37,6 +37,31 @@ export const adminApi = {
   removeEnrollment: (userId: string, courseId: string) =>
     api.delete(`/api/users/${userId}/enrollments/${courseId}`),
 
+  // Certificates
+  getCertificateConfig: () =>
+    api.get("/api/admin/certificates/config").then((r) => r.data),
+
+  saveCertificateConfig: (data: object) =>
+    api.put("/api/admin/certificates/config", data).then((r) => r.data),
+
+  addSponsor: (data: { name: string; logoUrl: string; order: number }) =>
+    api.post("/api/admin/certificates/config/sponsors", data).then((r) => r.data),
+
+  updateSponsor: (id: string, data: { name: string; logoUrl: string; order: number }) =>
+    api.put(`/api/admin/certificates/config/sponsors/${id}`, data).then((r) => r.data),
+
+  deleteSponsor: (id: string) =>
+    api.delete(`/api/admin/certificates/config/sponsors/${id}`),
+
+  getAllCertificates: (page = 1, pageSize = 20) =>
+    api.get("/api/admin/certificates", { params: { page, pageSize } }).then((r) => ({
+      data: r.data,
+      total: parseInt(r.headers["x-total-count"] || "0"),
+    })),
+
+  issueCertificate: (userId: string, courseId: string) =>
+    api.post("/api/admin/certificates/issue", { userId, courseId }).then((r) => r.data),
+
   // Streams
   getStreams: () =>
     api.get("/api/streams").then((r) => r.data),

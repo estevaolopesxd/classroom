@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "wFP3O14hGTY=",
+  "dgSpecHash": "BhhB4VmkkyI=",
   "success": true,
   "projectFilePath": "C:\\Desenvolvimento\\Classroom\\backend\\src\\Classroom.Infrastructure\\Classroom.Infrastructure.csproj",
   "expectedPackageFiles": [
@@ -42,6 +42,7 @@
     "C:\\Users\\estevao.correia\\.nuget\\packages\\newtonsoft.json\\13.0.3\\newtonsoft.json.13.0.3.nupkg.sha512",
     "C:\\Users\\estevao.correia\\.nuget\\packages\\npgsql\\10.0.2\\npgsql.10.0.2.nupkg.sha512",
     "C:\\Users\\estevao.correia\\.nuget\\packages\\npgsql.entityframeworkcore.postgresql\\10.0.1\\npgsql.entityframeworkcore.postgresql.10.0.1.nupkg.sha512",
+    "C:\\Users\\estevao.correia\\.nuget\\packages\\questpdf\\2024.12.0\\questpdf.2024.12.0.nupkg.sha512",
     "C:\\Users\\estevao.correia\\.nuget\\packages\\stripe.net\\51.0.1\\stripe.net.51.0.1.nupkg.sha512",
     "C:\\Users\\estevao.correia\\.nuget\\packages\\system.codedom\\6.0.0\\system.codedom.6.0.0.nupkg.sha512",
     "C:\\Users\\estevao.correia\\.nuget\\packages\\system.composition\\9.0.0\\system.composition.9.0.0.nupkg.sha512",

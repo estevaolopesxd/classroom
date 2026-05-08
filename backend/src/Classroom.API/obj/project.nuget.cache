@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "dxBjlUgwK7A=",
+  "dgSpecHash": "RSoQF4p6VFk=",
   "success": true,
   "projectFilePath": "C:\\Desenvolvimento\\Classroom\\backend\\src\\Classroom.API\\Classroom.API.csproj",
   "expectedPackageFiles": [
@@ -41,6 +41,7 @@
     "C:\\Users\\estevao.correia\\.nuget\\packages\\npgsql\\10.0.2\\npgsql.10.0.2.nupkg.sha512",
     "C:\\Users\\estevao.correia\\.nuget\\packages\\npgsql.entityframeworkcore.postgresql\\10.0.1\\npgsql.entityframeworkcore.postgresql.10.0.1.nupkg.sha512",
     "C:\\Users\\estevao.correia\\.nuget\\packages\\pipelines.sockets.unofficial\\2.2.8\\pipelines.sockets.unofficial.2.2.8.nupkg.sha512",
+    "C:\\Users\\estevao.correia\\.nuget\\packages\\questpdf\\2024.12.0\\questpdf.2024.12.0.nupkg.sha512",
     "C:\\Users\\estevao.correia\\.nuget\\packages\\stackexchange.redis\\2.12.14\\stackexchange.redis.2.12.14.nupkg.sha512",
     "C:\\Users\\estevao.correia\\.nuget\\packages\\stripe.net\\51.0.1\\stripe.net.51.0.1.nupkg.sha512",
     "C:\\Users\\estevao.correia\\.nuget\\packages\\swashbuckle.aspnetcore\\10.1.7\\swashbuckle.aspnetcore.10.1.7.nupkg.sha512",

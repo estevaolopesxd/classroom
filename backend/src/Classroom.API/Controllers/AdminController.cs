@@ -1,4 +1,5 @@
 using Classroom.Application.DTOs;
+using Classroom.Domain.Entities;
 using Classroom.Domain.Enums;
 using Classroom.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
@@ -186,7 +187,7 @@ public class AdminController(AppDbContext db) : ControllerBase
         return Ok(new
         {
             courseId,
-            courseTitle        = course.Title,
+            courseTitle = course.Title,
             thumbnailUrl       = course.ThumbnailUrl,
             isForSale          = course.IsForSale,
             price              = course.Price,
@@ -222,4 +223,146 @@ public class AdminController(AppDbContext db) : ControllerBase
             students
         });
     }
+
+    // ── Certificate Config ─────────────────────────────────────────────────────
+
+    [HttpGet("certificates/config")]
+    public async Task<IActionResult> GetCertificateConfig()
+    {
+        var cfg = await db.CertificateConfigs
+            .Include(c => c.Sponsors.OrderBy(s => s.Order))
+            .FirstOrDefaultAsync();
+
+        if (cfg is null) return Ok(null);
+
+        return Ok(MapCertConfigDto(cfg));
+    }
+
+    [HttpPut("certificates/config")]
+    public async Task<IActionResult> SaveCertificateConfig([FromBody] SaveCertificateConfigRequest req)
+    {
+        var cfg = await db.CertificateConfigs.Include(c => c.Sponsors).FirstOrDefaultAsync();
+
+        if (cfg is null)
+        {
+            cfg = new CertificateConfig { IsActive = true };
+            db.CertificateConfigs.Add(cfg);
+        }
+
+        cfg.InstitutionName     = req.InstitutionName;
+        cfg.InstitutionLogoUrl  = req.InstitutionLogoUrl;
+        cfg.SignatureImageUrl   = req.SignatureImageUrl;
+        cfg.SignerName          = req.SignerName;
+        cfg.SignerTitle         = req.SignerTitle;
+        cfg.BodyText            = req.BodyText ?? cfg.BodyText;
+        cfg.PrimaryColor        = req.PrimaryColor ?? cfg.PrimaryColor;
+        cfg.BackgroundColor     = req.BackgroundColor ?? cfg.BackgroundColor;
+        cfg.TextColor           = req.TextColor ?? cfg.TextColor;
+        cfg.BackgroundImageUrl  = req.BackgroundImageUrl;
+        cfg.CityName            = req.CityName;
+        cfg.UpdatedAt           = DateTime.UtcNow;
+
+        await db.SaveChangesAsync();
+        return Ok(MapCertConfigDto(cfg));
+    }
+
+    [HttpPost("certificates/config/sponsors")]
+    public async Task<IActionResult> AddSponsor([FromBody] UpsertSponsorRequest req)
+    {
+        var cfg = await db.CertificateConfigs.FirstOrDefaultAsync();
+        if (cfg is null) return BadRequest(new { message = "Salve a configuração do certificado primeiro." });
+
+        var sponsor = new CertificateSponsor
+        {
+            CertificateConfigId = cfg.Id,
+            Name = req.Name,
+            LogoUrl = req.LogoUrl,
+            Order = req.Order
+        };
+        db.CertificateSponsors.Add(sponsor);
+        await db.SaveChangesAsync();
+        return Ok(new SponsorDto(sponsor.Id, sponsor.Name, sponsor.LogoUrl, sponsor.Order));
+    }
+
+    [HttpPut("certificates/config/sponsors/{sponsorId:guid}")]
+    public async Task<IActionResult> UpdateSponsor(Guid sponsorId, [FromBody] UpsertSponsorRequest req)
+    {
+        var sponsor = await db.CertificateSponsors.FindAsync(sponsorId);
+        if (sponsor is null) return NotFound();
+
+        sponsor.Name    = req.Name;
+        sponsor.LogoUrl = req.LogoUrl;
+        sponsor.Order   = req.Order;
+        await db.SaveChangesAsync();
+        return Ok(new SponsorDto(sponsor.Id, sponsor.Name, sponsor.LogoUrl, sponsor.Order));
+    }
+
+    [HttpDelete("certificates/config/sponsors/{sponsorId:guid}")]
+    public async Task<IActionResult> DeleteSponsor(Guid sponsorId)
+    {
+        var sponsor = await db.CertificateSponsors.FindAsync(sponsorId);
+        if (sponsor is null) return NotFound();
+        db.CertificateSponsors.Remove(sponsor);
+        await db.SaveChangesAsync();
+        return NoContent();
+    }
+
+    [HttpGet("certificates")]
+    public async Task<IActionResult> GetAllCertificates([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+    {
+        pageSize = Math.Clamp(pageSize, 1, 100);
+        var certs = await db.Certificates
+            .OrderByDescending(c => c.IssuedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(c => new CertificateDto(
+                c.Id, c.Code, c.CourseId, c.CourseName,
+                c.StudentName, c.CourseDurationMinutes, c.IssuedAt))
+            .ToListAsync();
+
+        var total = await db.Certificates.CountAsync();
+        Response.Headers["X-Total-Count"] = total.ToString();
+        return Ok(certs);
+    }
+
+    // ── Certificate: issue manually for a user ─────────────────────────────────
+
+    [HttpPost("certificates/issue")]
+    public async Task<IActionResult> IssueCertificate([FromBody] IssueCertificateRequest req)
+    {
+        var user = await db.Users.FindAsync(req.UserId);
+        if (user is null) return NotFound(new { message = "Usuário não encontrado" });
+
+        var course = await db.Courses.FindAsync(req.CourseId);
+        if (course is null) return NotFound(new { message = "Curso não encontrado" });
+
+        var existing = await db.Certificates
+            .AnyAsync(c => c.UserId == req.UserId && c.CourseId == req.CourseId);
+        if (existing) return Conflict(new { message = "Certificado já emitido para este aluno neste curso" });
+
+        var cert = new Certificate
+        {
+            Code                  = Guid.NewGuid().ToString("N")[..12].ToUpper(),
+            UserId                = req.UserId,
+            CourseId              = req.CourseId,
+            StudentName           = user.FullName,
+            CourseName            = course.Title,
+            CourseDurationMinutes = course.DurationMinutes ?? 0,
+            IssuedAt              = DateTime.UtcNow
+        };
+        db.Certificates.Add(cert);
+        await db.SaveChangesAsync();
+        return Ok(new CertificateDto(cert.Id, cert.Code, cert.CourseId, cert.CourseName,
+            cert.StudentName, cert.CourseDurationMinutes, cert.IssuedAt));
+    }
+
+    private static CertificateConfigDto MapCertConfigDto(CertificateConfig cfg) => new(
+        cfg.Id, cfg.InstitutionName, cfg.InstitutionLogoUrl,
+        cfg.SignatureImageUrl, cfg.SignerName, cfg.SignerTitle,
+        cfg.BodyText, cfg.PrimaryColor, cfg.BackgroundColor, cfg.TextColor,
+        cfg.BackgroundImageUrl, cfg.CityName, cfg.IsActive,
+        cfg.Sponsors.OrderBy(s => s.Order)
+            .Select(s => new SponsorDto(s.Id, s.Name, s.LogoUrl, s.Order))
+            .ToList()
+    );
 }

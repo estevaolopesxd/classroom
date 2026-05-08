@@ -11,7 +11,7 @@ namespace Classroom.API.Controllers;
 [ApiController]
 [Route("api/progress")]
 [Authorize]
-public class ProgressController(AppDbContext db) : ControllerBase
+public class ProgressController(AppDbContext db, IConfiguration configuration) : ControllerBase
 {
     private Guid CurrentUserId => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
@@ -50,7 +50,73 @@ public class ProgressController(AppDbContext db) : ControllerBase
         }
 
         await db.SaveChangesAsync();
-        return Ok(new { isCompleted = progress.IsCompleted, watchedSeconds = progress.WatchedSeconds });
+
+        // ── Auto-issue certificate when course reaches 100% ─────────────────
+        bool certificateIssued = false;
+        string? certificateCode = null;
+
+        if (progress.IsCompleted)
+        {
+            // Find which course this lesson belongs to
+            var courseId = await db.Lessons
+                .Where(l => l.Id == lessonId)
+                .Select(l => l.Module.CourseId)
+                .FirstOrDefaultAsync();
+
+            if (courseId != Guid.Empty)
+            {
+                // Check total lessons vs completed lessons for this user in this course
+                var allLessonIds = await db.Lessons
+                    .Where(l => l.Module.CourseId == courseId)
+                    .Select(l => l.Id)
+                    .ToListAsync();
+
+                var completedCount = await db.LessonProgresses
+                    .CountAsync(lp => lp.UserId == userId && allLessonIds.Contains(lp.LessonId) && lp.IsCompleted);
+
+                if (completedCount >= allLessonIds.Count && allLessonIds.Count > 0)
+                {
+                    // Course is 100% complete — issue certificate if not already issued
+                    var already = await db.Certificates
+                        .FirstOrDefaultAsync(c => c.UserId == userId && c.CourseId == courseId);
+
+                    if (already is null)
+                    {
+                        var user   = await db.Users.FindAsync(userId);
+                        var course = await db.Courses.FindAsync(courseId);
+                        if (user is not null && course is not null)
+                        {
+                            var cert = new Certificate
+                            {
+                                Code                  = Guid.NewGuid().ToString("N")[..12].ToUpper(),
+                                UserId                = userId,
+                                CourseId              = courseId,
+                                StudentName           = user.FullName,
+                                CourseName            = course.Title,
+                                CourseDurationMinutes = course.DurationMinutes ?? 0,
+                                IssuedAt              = DateTime.UtcNow
+                            };
+                            db.Certificates.Add(cert);
+                            await db.SaveChangesAsync();
+                            certificateIssued = true;
+                            certificateCode   = cert.Code;
+                        }
+                    }
+                    else
+                    {
+                        certificateCode = already.Code;
+                    }
+                }
+            }
+        }
+
+        return Ok(new
+        {
+            isCompleted        = progress.IsCompleted,
+            watchedSeconds     = progress.WatchedSeconds,
+            certificateIssued,
+            certificateCode
+        });
     }
 
     [HttpGet("continue")]

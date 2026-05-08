@@ -17,6 +17,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<LessonProgress> LessonProgresses => Set<LessonProgress>();
     public DbSet<ThemeConfig> ThemeConfigs => Set<ThemeConfig>();
     public DbSet<Coupon> Coupons => Set<Coupon>();
+    public DbSet<Certificate> Certificates => Set<Certificate>();
+    public DbSet<CertificateConfig> CertificateConfigs => Set<CertificateConfig>();
+    public DbSet<CertificateSponsor> CertificateSponsors => Set<CertificateSponsor>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
