@@ -10,6 +10,10 @@ public class CourseEnrollmentConfiguration : IEntityTypeConfiguration<CourseEnro
     {
         builder.HasKey(e => e.Id);
         builder.Property(e => e.Source).HasConversion<string>().HasMaxLength(20);
+        builder.Property(e => e.SubscriptionStatus).HasConversion<string>().HasMaxLength(20);
+        builder.Property(e => e.StripeSubscriptionId).HasMaxLength(100);
+        builder.Property(e => e.StripeCustomerId).HasMaxLength(100);
+        builder.HasIndex(e => e.StripeSubscriptionId);
 
         builder.HasIndex(e => new { e.UserId, e.CourseId }).IsUnique();
         builder.HasIndex(e => e.UserId);

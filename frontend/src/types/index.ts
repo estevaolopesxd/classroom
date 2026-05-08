@@ -17,6 +17,25 @@ export interface TokenResponse {
   user: User;
 }
 
+// Pricing
+export type PricingType = "OneTime" | "Monthly" | "Quarterly" | "Semiannual" | "Annual";
+
+export const PRICING_TYPE_LABELS: Record<PricingType, string> = {
+  OneTime:    "Vitalício (pagamento único)",
+  Monthly:    "Mensal",
+  Quarterly:  "Trimestral (a cada 3 meses)",
+  Semiannual: "Semestral (a cada 6 meses)",
+  Annual:     "Anual",
+};
+
+export const PRICING_TYPE_SHORT: Record<PricingType, string> = {
+  OneTime:    "",
+  Monthly:    "/mês",
+  Quarterly:  "/trimestre",
+  Semiannual: "/semestre",
+  Annual:     "/ano",
+};
+
 // Courses
 export interface Course {
   id: string;
@@ -29,6 +48,7 @@ export interface Course {
   isForSale: boolean;
   price?: number;
   currency: string;
+  pricingType: PricingType;
   level?: string;
   durationMinutes?: number;
   totalModules: number;

@@ -28,7 +28,8 @@ public class AdminController(AppDbContext db) : ControllerBase
             .Take(5)
             .Select(c => new CourseDto(
                 c.Id, c.Title, c.Slug, c.Description, c.ShortDescription, c.ThumbnailUrl,
-                c.Status.ToString(), c.IsForSale, c.Price, c.Currency, c.Level, c.DurationMinutes,
+                c.Status.ToString(), c.IsForSale, c.Price, c.Currency, c.PricingType.ToString(),
+                c.Level, c.DurationMinutes,
                 c.Modules.Count, c.Modules.Sum(m => m.Lessons.Count),
                 c.CreatedAt, c.UpdatedAt))
             .ToListAsync();

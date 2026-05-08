@@ -11,6 +11,7 @@ public record CourseDto(
     bool IsForSale,
     decimal? Price,
     string Currency,
+    string PricingType,
     string? Level,
     int? DurationMinutes,
     int TotalModules,
@@ -30,6 +31,7 @@ public record CourseDetailDto(
     bool IsForSale,
     decimal? Price,
     string Currency,
+    string PricingType,
     string? Level,
     int? DurationMinutes,
     List<ModuleDto> Modules,
@@ -58,7 +60,8 @@ public record UpdateCourseRequest(
 public record UpdateSaleSettingsRequest(
     bool IsForSale,
     decimal? Price,
-    string Currency = "BRL"
+    string Currency = "BRL",
+    string PricingType = "OneTime"
 );
 
 public record ModuleDto(

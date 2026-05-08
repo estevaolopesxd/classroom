@@ -7,6 +7,7 @@ using Classroom.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Stripe;
 using Stripe.Checkout;
 
 namespace Classroom.API.Controllers;
@@ -28,12 +29,17 @@ public class PaymentsController(AppDbContext db, StripeService stripe, IConfigur
             return BadRequest(new { message = "Este curso não está disponível para venda" });
 
         var isEnrolled = await db.CourseEnrollments
-            .AnyAsync(e => e.UserId == userId && e.CourseId == request.CourseId);
+            .AnyAsync(e => e.UserId == userId && e.CourseId == request.CourseId && (
+                e.SubscriptionStatus == SubscriptionStatus.None ||
+                e.SubscriptionStatus == SubscriptionStatus.Active ||
+                e.SubscriptionStatus == SubscriptionStatus.PastDue ||
+                (e.SubscriptionStatus == SubscriptionStatus.Cancelled && e.CurrentPeriodEnd > DateTime.UtcNow)
+            ));
         if (isEnrolled)
             return Conflict(new { message = "Você já está inscrito neste curso" });
 
         // ── Resolver cupom ──────────────────────────────────────────────────
-        Coupon? coupon = null;
+        Domain.Entities.Coupon? coupon = null;
         if (!string.IsNullOrWhiteSpace(request.CouponCode))
         {
             var code = request.CouponCode.Trim().ToUpper();
@@ -60,7 +66,8 @@ public class PaymentsController(AppDbContext db, StripeService stripe, IConfigur
             {
                 UserId = userId,
                 CourseId = course.Id,
-                Source = EnrollmentSource.Free
+                Source = EnrollmentSource.Free,
+                SubscriptionStatus = SubscriptionStatus.None
             });
 
             var freePurchase = new Purchase
@@ -76,10 +83,8 @@ public class PaymentsController(AppDbContext db, StripeService stripe, IConfigur
                 DiscountPercent = coupon.DiscountPercent
             };
             db.Purchases.Add(freePurchase);
-
             coupon.UsedCount++;
             await db.SaveChangesAsync();
-
             return Ok(new CheckoutResponse(null, null, true));
         }
 
@@ -92,7 +97,6 @@ public class PaymentsController(AppDbContext db, StripeService stripe, IConfigur
 
         var frontendUrl = configuration["AllowedOrigins__0"] ?? "http://localhost:3002";
 
-        // Se há desconto, criamos um coupon no Stripe e passamos para a sessão
         string? stripeCouponId = null;
         if (coupon is not null)
             stripeCouponId = await stripe.CreateOrGetCouponAsync(coupon.Id.ToString(), coupon.DiscountPercent);
@@ -102,6 +106,7 @@ public class PaymentsController(AppDbContext db, StripeService stripe, IConfigur
             userId.ToString(), course.Id.ToString(),
             $"{frontendUrl}/checkout/success?session_id={{CHECKOUT_SESSION_ID}}",
             $"{frontendUrl}/checkout/cancel",
+            course.PricingType,
             stripeCouponId
         );
 
@@ -119,10 +124,7 @@ public class PaymentsController(AppDbContext db, StripeService stripe, IConfigur
         };
         db.Purchases.Add(purchase);
 
-        // Reserva o uso do cupom — confirma ao receber webhook
-        if (coupon is not null)
-            coupon.UsedCount++;
-
+        if (coupon is not null) coupon.UsedCount++;
         await db.SaveChangesAsync();
 
         return Ok(new CheckoutResponse(session.Url, session.Id));
@@ -152,70 +154,185 @@ public class PaymentsController(AppDbContext db, StripeService stripe, IConfigur
         var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
         var signature = Request.Headers["Stripe-Signature"].FirstOrDefault();
 
-        if (string.IsNullOrEmpty(signature))
-            return BadRequest();
+        if (string.IsNullOrEmpty(signature)) return BadRequest();
 
         Stripe.Event stripeEvent;
         try
         {
             stripeEvent = stripe.ConstructWebhookEvent(json, signature);
         }
-        catch (Exception)
+        catch
         {
             return BadRequest(new { message = "Webhook inválido" });
         }
 
-        if (stripeEvent.Type == "checkout.session.completed")
+        switch (stripeEvent.Type)
         {
-            var session = stripeEvent.Data.Object as Session;
-            if (session is null) return Ok();
-
-            if (!session.Metadata.TryGetValue("userId", out var userIdStr) ||
-                !session.Metadata.TryGetValue("courseId", out var courseIdStr))
-                return Ok();
-
-            var userId = Guid.Parse(userIdStr);
-            var courseId = Guid.Parse(courseIdStr);
-
-            var purchase = await db.Purchases
-                .FirstOrDefaultAsync(p => p.StripeSessionId == session.Id);
-
-            if (purchase is not null)
+            // ── One-time payment completed ───────────────────────────────────
+            case "checkout.session.completed":
             {
-                purchase.Status = PurchaseStatus.Completed;
-                purchase.StripePaymentIntentId = session.PaymentIntentId;
-                purchase.PurchasedAt = DateTime.UtcNow;
-            }
+                var session = stripeEvent.Data.Object as Session;
+                if (session is null) break;
 
-            var alreadyEnrolled = await db.CourseEnrollments
-                .AnyAsync(e => e.UserId == userId && e.CourseId == courseId);
+                if (!session.Metadata.TryGetValue("userId", out var userIdStr) ||
+                    !session.Metadata.TryGetValue("courseId", out var courseIdStr))
+                    break;
 
-            if (!alreadyEnrolled)
-            {
-                db.CourseEnrollments.Add(new CourseEnrollment
-                {
-                    UserId = userId,
-                    CourseId = courseId,
-                    Source = EnrollmentSource.Purchase
-                });
-            }
+                var userId = Guid.Parse(userIdStr);
+                var courseId = Guid.Parse(courseIdStr);
 
-            await db.SaveChangesAsync();
-        }
-        else if (stripeEvent.Type == "charge.refunded")
-        {
-            // Handle refund - could revoke enrollment
-            var charge = stripeEvent.Data.Object as Stripe.Charge;
-            if (charge?.PaymentIntentId is not null)
-            {
+                // Update purchase record
                 var purchase = await db.Purchases
-                    .FirstOrDefaultAsync(p => p.StripePaymentIntentId == charge.PaymentIntentId);
+                    .FirstOrDefaultAsync(p => p.StripeSessionId == session.Id);
                 if (purchase is not null)
-                    purchase.Status = PurchaseStatus.Refunded;
+                {
+                    purchase.Status = PurchaseStatus.Completed;
+                    purchase.StripePaymentIntentId = session.PaymentIntentId;
+                    purchase.PurchasedAt = DateTime.UtcNow;
+                }
+
+                // For subscriptions, enrollment is created/updated on subscription.updated below.
+                // For one-time payments, create enrollment here.
+                if (session.Mode == "payment")
+                {
+                    var alreadyEnrolled = await db.CourseEnrollments
+                        .AnyAsync(e => e.UserId == userId && e.CourseId == courseId);
+                    if (!alreadyEnrolled)
+                    {
+                        db.CourseEnrollments.Add(new CourseEnrollment
+                        {
+                            UserId = userId,
+                            CourseId = courseId,
+                            Source = EnrollmentSource.Purchase,
+                            SubscriptionStatus = SubscriptionStatus.None
+                        });
+                    }
+                }
+
+                // For subscriptions, save the subscription ID + customer on enrollment
+                if (session.Mode == "subscription" && !string.IsNullOrEmpty(session.SubscriptionId))
+                {
+                    var enrollment = await db.CourseEnrollments
+                        .FirstOrDefaultAsync(e => e.UserId == userId && e.CourseId == courseId);
+
+                    if (enrollment is null)
+                    {
+                        enrollment = new CourseEnrollment
+                        {
+                            UserId = userId,
+                            CourseId = courseId,
+                            Source = EnrollmentSource.Purchase,
+                            SubscriptionStatus = SubscriptionStatus.Active,
+                            StripeSubscriptionId = session.SubscriptionId,
+                            StripeCustomerId = session.CustomerId
+                        };
+                        db.CourseEnrollments.Add(enrollment);
+                    }
+                    else
+                    {
+                        enrollment.StripeSubscriptionId = session.SubscriptionId;
+                        enrollment.StripeCustomerId = session.CustomerId;
+                        enrollment.SubscriptionStatus = SubscriptionStatus.Active;
+                    }
+                }
+
                 await db.SaveChangesAsync();
+                break;
+            }
+
+            // ── Subscription updated (renewal, trial end, status change) ────
+            // In Stripe.net v51, period end is on SubscriptionItem
+            case "customer.subscription.updated":
+            {
+                var sub = stripeEvent.Data.Object as Subscription;
+                if (sub is null) break;
+
+                var enrollment = await db.CourseEnrollments
+                    .FirstOrDefaultAsync(e => e.StripeSubscriptionId == sub.Id);
+                if (enrollment is null) break;
+
+                enrollment.SubscriptionStatus = MapSubscriptionStatus(sub.Status);
+                enrollment.CurrentPeriodEnd = sub.Items?.Data?.FirstOrDefault()?.CurrentPeriodEnd;
+                await db.SaveChangesAsync();
+                break;
+            }
+
+            // ── Subscription deleted / cancelled ────────────────────────────
+            case "customer.subscription.deleted":
+            {
+                var sub = stripeEvent.Data.Object as Subscription;
+                if (sub is null) break;
+
+                var enrollment = await db.CourseEnrollments
+                    .FirstOrDefaultAsync(e => e.StripeSubscriptionId == sub.Id);
+                if (enrollment is null) break;
+
+                enrollment.SubscriptionStatus = SubscriptionStatus.Cancelled;
+                enrollment.CurrentPeriodEnd = sub.Items?.Data?.FirstOrDefault()?.CurrentPeriodEnd;
+                await db.SaveChangesAsync();
+                break;
+            }
+
+            // ── Invoice paid — extend period ─────────────────────────────────
+            // In Stripe.net v51, Invoice.Parent.SubscriptionDetails.SubscriptionId
+            case "invoice.payment_succeeded":
+            {
+                var invoice = stripeEvent.Data.Object as Invoice;
+                var subId = invoice?.Parent?.SubscriptionDetails?.SubscriptionId;
+                if (subId is null) break;
+
+                var enrollment = await db.CourseEnrollments
+                    .FirstOrDefaultAsync(e => e.StripeSubscriptionId == subId);
+                if (enrollment is null) break;
+
+                enrollment.SubscriptionStatus = SubscriptionStatus.Active;
+                await db.SaveChangesAsync();
+                break;
+            }
+
+            // ── Invoice payment failed ────────────────────────────────────────
+            case "invoice.payment_failed":
+            {
+                var invoice = stripeEvent.Data.Object as Invoice;
+                var subId = invoice?.Parent?.SubscriptionDetails?.SubscriptionId;
+                if (subId is null) break;
+
+                var enrollment = await db.CourseEnrollments
+                    .FirstOrDefaultAsync(e => e.StripeSubscriptionId == subId);
+                if (enrollment is null) break;
+
+                enrollment.SubscriptionStatus = SubscriptionStatus.PastDue;
+                await db.SaveChangesAsync();
+                break;
+            }
+
+            // ── Refund ────────────────────────────────────────────────────────
+            case "charge.refunded":
+            {
+                var charge = stripeEvent.Data.Object as Charge;
+                if (charge?.PaymentIntentId is not null)
+                {
+                    var purchase = await db.Purchases
+                        .FirstOrDefaultAsync(p => p.StripePaymentIntentId == charge.PaymentIntentId);
+                    if (purchase is not null)
+                        purchase.Status = PurchaseStatus.Refunded;
+                    await db.SaveChangesAsync();
+                }
+                break;
             }
         }
 
         return Ok();
     }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private static SubscriptionStatus MapSubscriptionStatus(string stripeStatus) => stripeStatus switch
+    {
+        "active"   => SubscriptionStatus.Active,
+        "past_due" => SubscriptionStatus.PastDue,
+        "canceled" => SubscriptionStatus.Cancelled,
+        "unpaid"   => SubscriptionStatus.PastDue,
+        _          => SubscriptionStatus.Active
+    };
 }

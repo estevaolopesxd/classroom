@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { coursesApi } from "@/lib/api/courses";
 import type { Course } from "@/types";
+import { PRICING_TYPE_SHORT } from "@/types";
 import { BookOpen, Search, Loader2 } from "lucide-react";
 
 const S = {
@@ -128,7 +129,7 @@ export default function CoursesPage() {
                     <span style={{ color: S.muted }}>{course.totalLessons} aula{course.totalLessons !== 1 ? "s" : ""}</span>
                     <span style={{ fontWeight: 700, color: course.isForSale && course.price ? S.ink : S.rose }}>
                       {course.isForSale && course.price
-                        ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: course.currency || "BRL" }).format(course.price)
+                        ? `${new Intl.NumberFormat("pt-BR", { style: "currency", currency: course.currency || "BRL" }).format(course.price)}${PRICING_TYPE_SHORT[course.pricingType ?? "OneTime"]}`
                         : "Gratuito"}
                     </span>
                   </div>

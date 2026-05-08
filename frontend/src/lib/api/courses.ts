@@ -29,7 +29,7 @@ export const coursesApi = {
   archive: (id: string) =>
     api.post<Course>(`/api/courses/${id}/archive`).then((r) => r.data),
 
-  updateSaleSettings: (id: string, data: { isForSale: boolean; price?: number; currency?: string }) =>
+  updateSaleSettings: (id: string, data: { isForSale: boolean; price?: number; currency?: string; pricingType?: string }) =>
     api.patch<Course>(`/api/courses/${id}/sale-settings`, data).then((r) => r.data),
 
   enrollFree: (id: string) =>

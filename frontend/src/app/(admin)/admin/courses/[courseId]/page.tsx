@@ -3,7 +3,8 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { coursesApi } from "@/lib/api/courses";
-import type { CourseDetail, Lesson } from "@/types";
+import type { CourseDetail, Lesson, PricingType } from "@/types";
+import { PRICING_TYPE_LABELS, PRICING_TYPE_SHORT } from "@/types";
 import { VideoUploader } from "@/components/video/VideoUploader";
 import { VideoRecorder } from "@/components/video/VideoRecorder";
 import { VideoEditorModal } from "@/components/video/VideoEditorModal";
@@ -213,6 +214,7 @@ export default function CourseEditorPage() {
   const [thumbnailUploading, setThumbnailUploading] = useState(false);
   const [courseForm, setCourseForm] = useState({ title: "", description: "", shortDescription: "", level: "", price: "" });
   const [saleEnabled, setSaleEnabled] = useState(false);
+  const [pricingType, setPricingType] = useState<PricingType>("OneTime");
   const [saleLoading, setSaleLoading] = useState(false);
 
   // Module modal
@@ -245,6 +247,7 @@ export default function CourseEditorPage() {
         price: data.price?.toString() || "",
       });
       setSaleEnabled(data.isForSale);
+      setPricingType((data.pricingType as PricingType) || "OneTime");
     } catch {
       toast.error("Erro ao carregar curso");
     } finally {
@@ -293,6 +296,7 @@ export default function CourseEditorPage() {
         isForSale: saleEnabled,
         price: saleEnabled && courseForm.price ? parseFloat(courseForm.price) : undefined,
         currency: "BRL",
+        pricingType,
       });
       toast.success("Configurações de venda salvas");
       load();
@@ -722,17 +726,61 @@ export default function CourseEditorPage() {
           </div>
 
           {saleEnabled && (
-            <div>
-              <label style={labelStyle}>Preço (R$)</label>
-              <input
-                type="number" min="0" step="0.01" placeholder="Ex: 97.00"
-                value={courseForm.price}
-                onChange={e => setCourseForm(f => ({ ...f, price: e.target.value }))}
-                style={inputStyle}
-              />
-              <p style={{ fontSize: 11, color: S.muted, marginTop: 6 }}>
-                O produto será criado/atualizado no Stripe automaticamente.
-              </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              {/* Pricing type selector */}
+              <div>
+                <label style={labelStyle}>Tipo de cobrança</label>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                  {(Object.keys(PRICING_TYPE_LABELS) as PricingType[]).map((pt) => (
+                    <button
+                      key={pt}
+                      type="button"
+                      onClick={() => setPricingType(pt)}
+                      style={{
+                        padding: "10px 14px",
+                        borderRadius: 10,
+                        border: `2px solid ${pricingType === pt ? S.rose : S.border}`,
+                        background: pricingType === pt ? "rgba(212,67,124,0.07)" : S.white,
+                        color: pricingType === pt ? S.rose : S.ink,
+                        fontWeight: pricingType === pt ? 700 : 400,
+                        fontSize: 13,
+                        cursor: "pointer",
+                        textAlign: "left",
+                        fontFamily: "inherit",
+                        transition: "all 0.15s",
+                      }}
+                    >
+                      {PRICING_TYPE_LABELS[pt]}
+                    </button>
+                  ))}
+                </div>
+                <p style={{ fontSize: 11, color: S.muted, marginTop: 6 }}>
+                  {pricingType === "OneTime"
+                    ? "Pagamento único — acesso vitalício ao curso."
+                    : `Cobrança recorrente via Stripe. O acesso é revogado automaticamente se a assinatura for cancelada.`}
+                </p>
+              </div>
+
+              {/* Price input */}
+              <div>
+                <label style={labelStyle}>
+                  Preço (R$)
+                  {pricingType !== "OneTime" && (
+                    <span style={{ fontWeight: 400, color: S.muted, marginLeft: 4 }}>
+                      {PRICING_TYPE_SHORT[pricingType]}
+                    </span>
+                  )}
+                </label>
+                <input
+                  type="number" min="0" step="0.01" placeholder="Ex: 97.00"
+                  value={courseForm.price}
+                  onChange={e => setCourseForm(f => ({ ...f, price: e.target.value }))}
+                  style={inputStyle}
+                />
+                <p style={{ fontSize: 11, color: S.muted, marginTop: 6 }}>
+                  O produto e preço serão criados/atualizados no Stripe automaticamente.
+                </p>
+              </div>
             </div>
           )}
 
@@ -742,7 +790,10 @@ export default function CourseEditorPage() {
               background: S.greenBg, border: `1px solid ${S.green}33`,
               fontSize: 13, color: S.green, fontWeight: 600,
             }}>
-              Curso à venda por {new Intl.NumberFormat("pt-BR", { style: "currency", currency: course.currency || "BRL" }).format(course.price)}
+              {new Intl.NumberFormat("pt-BR", { style: "currency", currency: course.currency || "BRL" }).format(course.price)}
+              {PRICING_TYPE_SHORT[course.pricingType || "OneTime"]}
+              {" · "}
+              {PRICING_TYPE_LABELS[course.pricingType || "OneTime"]}
             </div>
           )}
 

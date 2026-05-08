@@ -22,7 +22,12 @@
       "Bash(awk '{print $5, $9}')",
       "Bash(find \"C:\\\\Desenvolvimento\\\\Classroom\\\\frontend\\\\src\\\\app\\\\\\(admin\\)\" -type f \\\\\\( -name \"*.tsx\" -o -name \"*.ts\" \\\\\\) -exec wc -l {} +)",
       "PowerShell(git -C \"C:\\\\Desenvolvimento\\\\Classroom\" status --short)",
-      "PowerShell(git -C \"C:\\\\Desenvolvimento\\\\Classroom\" status 2>&1)"
+      "PowerShell(git -C \"C:\\\\Desenvolvimento\\\\Classroom\" status 2>&1)",
+      "Bash(strings \"C:/Users/estevao.correia/.nuget/packages/stripe.net/51.0.1/lib/net8.0/Stripe.net.dll\" 2>/dev/null | grep -i \"currentperiod\\\\|SubscriptionId\\\\|subscription_id\\\\|current_period\" | sort -u | head -20)",
+      "Bash(cat)",
+      "Bash(mkdir -p /tmp/StripeCheck)",
+      "Bash(dotnet run *)",
+      "Bash(npx tsc *)"
     ]
   }
 }

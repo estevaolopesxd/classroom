@@ -15,6 +15,7 @@ public class Course : BaseEntity
     public bool IsForSale { get; set; }
     public decimal? Price { get; set; }
     public string Currency { get; set; } = "BRL";
+    public PricingType PricingType { get; set; } = PricingType.OneTime;
     public string? StripePriceId { get; set; }
     public string? StripeProductId { get; set; }
     public string? Level { get; set; }

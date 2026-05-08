@@ -7,6 +7,7 @@ import { paymentsApi } from "@/lib/api/payments";
 import { couponsApi, type ValidateCouponResponse } from "@/lib/api/coupons";
 import { useAuthStore } from "@/lib/stores/authStore";
 import type { CourseDetail } from "@/types";
+import { PRICING_TYPE_SHORT, PRICING_TYPE_LABELS } from "@/types";
 import { BookOpen, Play, Lock, CheckCircle, Loader2, ChevronLeft, ChevronRight, ChevronDown, Tag, X } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -130,6 +131,7 @@ export default function CourseDetailPage() {
   const basePrice = course?.price ?? 0;
   const displayPrice = couponResult?.valid ? couponResult.finalPrice : basePrice;
   const currency = course?.currency || "BRL";
+  const pricingSuffix = PRICING_TYPE_SHORT[course?.pricingType ?? "OneTime"];
 
   if (loading) return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "60vh" }}>
@@ -289,23 +291,32 @@ export default function CourseDetailPage() {
               <div style={{ fontSize: 26, fontWeight: 800, color: S.green }}>Gratuito</div>
             ) : (
               <div>
-                {/* Original price */}
+                {/* Original price (with strike when coupon applied) */}
                 {couponResult?.valid && (
                   <div style={{ fontSize: 14, color: S.muted, textDecoration: "line-through", marginBottom: 2 }}>
-                    {fmt(basePrice, currency)}
+                    {fmt(basePrice, currency)}{pricingSuffix}
                   </div>
                 )}
                 {/* Final price */}
-                <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
                   <span style={{ fontSize: 28, fontWeight: 800, color: couponResult?.valid ? S.green : S.ink }}>
                     {fmt(displayPrice, currency)}
                   </span>
+                  {pricingSuffix && !couponResult?.valid && (
+                    <span style={{ fontSize: 15, fontWeight: 600, color: S.muted }}>{pricingSuffix}</span>
+                  )}
                   {couponResult?.valid && (
                     <span style={{ fontSize: 13, fontWeight: 700, color: S.green }}>
                       −{couponResult.discountPercent}%
                     </span>
                   )}
                 </div>
+                {/* Subscription label */}
+                {course?.pricingType && course.pricingType !== "OneTime" && !couponResult?.valid && (
+                  <div style={{ fontSize: 12, color: S.muted, marginTop: 3 }}>
+                    {PRICING_TYPE_LABELS[course.pricingType]} · cancele a qualquer momento
+                  </div>
+                )}
                 {couponResult?.valid && (
                   <div style={{ fontSize: 12, color: S.green, marginTop: 2 }}>
                     Você economiza {fmt(couponResult.savedAmount, currency)}
@@ -397,13 +408,21 @@ export default function CourseDetailPage() {
                 <><Play size={16} /> Acessar curso</>
               ) : isFree ? (
                 "Acessar gratuitamente"
+              ) : course?.pricingType && course.pricingType !== "OneTime" ? (
+                `Assinar${pricingSuffix}`
               ) : (
                 "Comprar agora"
               )}
             </button>
 
             <p style={{ fontSize: 12, textAlign: "center", color: S.muted, margin: 0 }}>
-              {isEnrolled ? "Seu acesso está ativo" : isFree ? "Acesso imediato e gratuito" : "Acesso vitalício ao curso"}
+              {isEnrolled
+                ? "Seu acesso está ativo"
+                : isFree
+                ? "Acesso imediato e gratuito"
+                : course?.pricingType && course.pricingType !== "OneTime"
+                ? "Cancele a qualquer momento pelo Stripe"
+                : "Acesso vitalício ao curso"}
             </p>
 
             {/* Course stats */}

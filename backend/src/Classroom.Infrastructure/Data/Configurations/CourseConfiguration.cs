@@ -13,6 +13,7 @@ public class CourseConfiguration : IEntityTypeConfiguration<Course>
         builder.Property(c => c.Slug).HasMaxLength(220).IsRequired();
         builder.HasIndex(c => c.Slug).IsUnique();
         builder.Property(c => c.Status).HasConversion<string>().HasMaxLength(20);
+        builder.Property(c => c.PricingType).HasConversion<string>().HasMaxLength(20);
         builder.Property(c => c.Price).HasPrecision(10, 2);
         builder.Property(c => c.Currency).HasMaxLength(3);
         builder.Property(c => c.StripePriceId).HasMaxLength(100);

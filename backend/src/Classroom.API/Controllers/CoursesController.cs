@@ -75,8 +75,13 @@ public class CoursesController(AppDbContext db, StripeService stripe, MinIOStora
     public async Task<ActionResult<List<CourseDto>>> GetMyCourses()
     {
         var userId = CurrentUserId;
+        var now = DateTime.UtcNow;
         var courses = await db.CourseEnrollments
-            .Where(e => e.UserId == userId)
+            .Where(e => e.UserId == userId && (
+                e.SubscriptionStatus == SubscriptionStatus.None ||
+                e.SubscriptionStatus == SubscriptionStatus.Active ||
+                e.SubscriptionStatus == SubscriptionStatus.PastDue ||
+                (e.SubscriptionStatus == SubscriptionStatus.Cancelled && e.CurrentPeriodEnd > now)))
             .Include(e => e.Course).ThenInclude(c => c.Modules).ThenInclude(m => m.Lessons)
             .Select(e => MapDto(e.Course))
             .ToListAsync();
@@ -194,16 +199,23 @@ public class CoursesController(AppDbContext db, StripeService stripe, MinIOStora
         course.Price = request.Price;
         course.Currency = request.Currency;
 
+        // Parse PricingType safely (defaults to OneTime)
+        if (Enum.TryParse<PricingType>(request.PricingType, ignoreCase: true, out var pt))
+            course.PricingType = pt;
+        else
+            course.PricingType = PricingType.OneTime;
+
         if (request.IsForSale && request.Price.HasValue && stripe.IsConfigured)
         {
-            // Create or update Stripe product/price
+            // Ensure Stripe product exists
             if (string.IsNullOrEmpty(course.StripeProductId))
             {
                 var product = await stripe.CreateProductAsync(course.Title, course.Description ?? course.Title);
                 course.StripeProductId = product.Id;
             }
 
-            var price = await stripe.CreatePriceAsync(course.StripeProductId, request.Price.Value, request.Currency);
+            // Always create a new Stripe Price (prices are immutable; old one stays archived)
+            var price = await stripe.CreatePriceAsync(course.StripeProductId, request.Price.Value, request.Currency, course.PricingType);
             course.StripePriceId = price.Id;
         }
 
@@ -309,14 +321,16 @@ public class CoursesController(AppDbContext db, StripeService stripe, MinIOStora
 
     private static CourseDto MapDto(Course c) => new(
         c.Id, c.Title, c.Slug, c.Description, c.ShortDescription, c.ThumbnailUrl,
-        c.Status.ToString(), c.IsForSale, c.Price, c.Currency, c.Level, c.DurationMinutes,
+        c.Status.ToString(), c.IsForSale, c.Price, c.Currency, c.PricingType.ToString(),
+        c.Level, c.DurationMinutes,
         c.Modules.Count, c.Modules.Sum(m => m.Lessons.Count),
         c.CreatedAt, c.UpdatedAt
     );
 
     private static CourseDetailDto MapDetailDto(Course c) => new(
         c.Id, c.Title, c.Slug, c.Description, c.ShortDescription, c.ThumbnailUrl,
-        c.Status.ToString(), c.IsForSale, c.Price, c.Currency, c.Level, c.DurationMinutes,
+        c.Status.ToString(), c.IsForSale, c.Price, c.Currency, c.PricingType.ToString(),
+        c.Level, c.DurationMinutes,
         c.Modules.OrderBy(m => m.Order).Select(m => new ModuleDto(
             m.Id, m.CourseId, m.Title, m.Description, m.Order, m.IsIntro,
             m.Lessons.Count,

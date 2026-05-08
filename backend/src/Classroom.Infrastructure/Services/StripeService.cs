@@ -1,3 +1,4 @@
+using Classroom.Domain.Enums;
 using Microsoft.Extensions.Configuration;
 using Stripe;
 using Stripe.Checkout;
@@ -31,25 +32,58 @@ public class StripeService(IConfiguration configuration)
         });
     }
 
-    public async Task<Price> CreatePriceAsync(string productId, decimal amount, string currency)
+    /// <summary>
+    /// Creates a Stripe Price for a given product.
+    /// For OneTime pricing, creates a one-off price.
+    /// For subscription pricing, creates a recurring price with the correct interval.
+    /// </summary>
+    public async Task<Price> CreatePriceAsync(string productId, decimal amount, string currency, PricingType pricingType)
     {
         var service = new PriceService(CreateClient());
-        return await service.CreateAsync(new PriceCreateOptions
+
+        var options = new PriceCreateOptions
         {
             Product = productId,
             UnitAmount = (long)(amount * 100),
             Currency = currency.ToLower()
-        });
+        };
+
+        if (pricingType != PricingType.OneTime)
+        {
+            options.Recurring = pricingType switch
+            {
+                PricingType.Monthly    => new PriceRecurringOptions { Interval = "month", IntervalCount = 1 },
+                PricingType.Quarterly  => new PriceRecurringOptions { Interval = "month", IntervalCount = 3 },
+                PricingType.Semiannual => new PriceRecurringOptions { Interval = "month", IntervalCount = 6 },
+                PricingType.Annual     => new PriceRecurringOptions { Interval = "year",  IntervalCount = 1 },
+                _ => null
+            };
+        }
+
+        return await service.CreateAsync(options);
     }
 
+    /// <summary>
+    /// Creates a Stripe Checkout Session.
+    /// Automatically chooses "payment" or "subscription" mode based on pricing type.
+    /// Coupon discounts are supported for both modes.
+    /// </summary>
     public async Task<Session> CreateCheckoutSessionAsync(
-        string priceId, string customerEmail, string userId, string courseId,
-        string successUrl, string cancelUrl, string? stripeCouponId = null)
+        string priceId,
+        string customerEmail,
+        string userId,
+        string courseId,
+        string successUrl,
+        string cancelUrl,
+        PricingType pricingType = PricingType.OneTime,
+        string? stripeCouponId = null)
     {
         var client = CreateClient();
+        var isSubscription = pricingType != PricingType.OneTime;
+
         var options = new SessionCreateOptions
         {
-            Mode = "payment",
+            Mode = isSubscription ? "subscription" : "payment",
             CustomerEmail = customerEmail,
             LineItems =
             [
@@ -63,11 +97,12 @@ public class StripeService(IConfiguration configuration)
             CancelUrl = cancelUrl,
             Metadata = new Dictionary<string, string>
             {
-                ["userId"] = userId,
+                ["userId"]   = userId,
                 ["courseId"] = courseId
             }
         };
 
+        // Discounts work at session level for both payment and subscription modes
         if (!string.IsNullOrEmpty(stripeCouponId))
         {
             options.Discounts =
@@ -81,14 +116,13 @@ public class StripeService(IConfiguration configuration)
     }
 
     /// <summary>
-    /// Creates a percentage-off coupon on Stripe (idempotent — uses coupon GUID as idempotency key).
+    /// Creates a percentage-off coupon on Stripe (idempotent — uses coupon GUID as Stripe coupon ID).
     /// </summary>
     public async Task<string> CreateOrGetCouponAsync(string couponId, decimal discountPercent)
     {
         var client = CreateClient();
         var service = new CouponService(client);
 
-        // Try to retrieve existing first (by idempotency: we use couponId as the Stripe coupon ID)
         try
         {
             var existing = await service.GetAsync(couponId);
@@ -106,6 +140,13 @@ public class StripeService(IConfiguration configuration)
             Duration = "once"
         });
         return coupon.Id;
+    }
+
+    /// <summary>Cancels an active Stripe subscription immediately.</summary>
+    public async Task CancelSubscriptionAsync(string subscriptionId)
+    {
+        var service = new SubscriptionService(CreateClient());
+        await service.CancelAsync(subscriptionId, new SubscriptionCancelOptions());
     }
 
     public Event ConstructWebhookEvent(string json, string signature)
