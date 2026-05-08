@@ -23,9 +23,9 @@ public class JwtTokenService(IConfiguration configuration)
             new Claim(JwtRegisteredClaimNames.Email, user.Email),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new Claim(ClaimTypes.Role, user.Role.ToString()),
+            // Only include display name — avatarUrl changes and bloats every request
             new Claim("firstName", user.FirstName),
             new Claim("lastName", user.LastName),
-            new Claim("avatarUrl", user.AvatarUrl ?? string.Empty)
         };
 
         var expiry = int.Parse(configuration["Jwt:AccessTokenExpiryMinutes"] ?? "15");

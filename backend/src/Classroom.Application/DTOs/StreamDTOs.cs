@@ -1,11 +1,29 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Classroom.Application.DTOs;
 
-public record CreateStreamRequest(string Title, DateTime? ScheduledAt = null);
+public record CreateStreamRequest(
+    [Required, MaxLength(200)] string Title,
+    DateTime? ScheduledAt = null
+);
 
-public record StreamDto(
+/// <summary>Full DTO returned only to Admins — includes the sensitive StreamKey.</summary>
+public record StreamAdminDto(
     Guid Id,
     string Title,
-    string StreamKey,
+    string StreamKey,   // ⚠ sensitive — never return to students
+    string? HlsUrl,
+    string Status,
+    DateTime? ScheduledAt,
+    DateTime? StartedAt,
+    DateTime? EndedAt,
+    DateTime CreatedAt
+);
+
+/// <summary>Safe DTO returned to any authenticated user — StreamKey omitted.</summary>
+public record StreamPublicDto(
+    Guid Id,
+    string Title,
     string? HlsUrl,
     string Status,
     DateTime? ScheduledAt,

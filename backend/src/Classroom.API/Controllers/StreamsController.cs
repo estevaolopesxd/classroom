@@ -18,26 +18,35 @@ public class StreamsController(AppDbContext db, IConfiguration configuration, IL
 
     [HttpGet]
     [Authorize(Roles = "Admin")]
-    public async Task<ActionResult<List<StreamDto>>> GetAll()
+    public async Task<ActionResult<List<StreamAdminDto>>> GetAll()
     {
         var streams = await db.LiveStreams
             .OrderByDescending(s => s.CreatedAt)
-            .Select(s => MapDto(s))
+            .Select(s => MapAdminDto(s))
             .ToListAsync();
         return Ok(streams);
     }
 
+    /// <summary>
+    /// Returns stream info. Admins get the full DTO (with StreamKey).
+    /// Students/other authenticated users get a public DTO (no StreamKey).
+    /// </summary>
     [HttpGet("{id:guid}")]
     [Authorize]
-    public async Task<ActionResult<StreamDto>> GetById(Guid id)
+    public async Task<ActionResult> GetById(Guid id)
     {
         var stream = await db.LiveStreams.FindAsync(id);
-        return stream is null ? NotFound() : Ok(MapDto(stream));
+        if (stream is null) return NotFound();
+
+        if (User.IsInRole("Admin"))
+            return Ok(MapAdminDto(stream));
+
+        return Ok(MapPublicDto(stream));
     }
 
     [HttpPost]
     [Authorize(Roles = "Admin")]
-    public async Task<ActionResult<StreamDto>> Create([FromBody] CreateStreamRequest request)
+    public async Task<ActionResult<StreamAdminDto>> Create([FromBody] CreateStreamRequest request)
     {
         var streamKey = Guid.NewGuid().ToString("N"); // no hyphens, clean key
         var rtmpBase = configuration["NginxRtmp:RtmpUrl"] ?? "rtmp://localhost:1935/live";
@@ -55,35 +64,50 @@ public class StreamsController(AppDbContext db, IConfiguration configuration, IL
         db.LiveStreams.Add(stream);
         await db.SaveChangesAsync();
 
-        var result = MapDto(stream);
         return Ok(new
         {
-            result.Id,
-            result.Title,
-            result.StreamKey,
-            result.HlsUrl,
-            result.Status,
+            stream.Id,
+            stream.Title,
+            StreamKey = streamKey,
+            stream.HlsUrl,
+            Status = stream.Status.ToString(),
             RtmpUrl = rtmpBase,
-            Instructions = $"Configure seu software de streaming: Server={rtmpBase}, Key={streamKey}"
+            Instructions = $"Server={rtmpBase}, Key={streamKey}"
         });
     }
 
     [HttpPost("{id:guid}/end")]
     [Authorize(Roles = "Admin")]
-    public async Task<ActionResult<StreamDto>> End(Guid id)
+    public async Task<ActionResult<StreamAdminDto>> End(Guid id)
     {
         var stream = await db.LiveStreams.FindAsync(id);
         if (stream is null) return NotFound();
         stream.Status = StreamStatus.Ended;
         stream.EndedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
-        return Ok(MapDto(stream));
+        return Ok(MapAdminDto(stream));
     }
 
-    // Called by nginx-rtmp on_publish callback
+    /// <summary>
+    /// Called by nginx-rtmp on_publish. Protected by a shared secret
+    /// so only the nginx-rtmp container can trigger this.
+    /// </summary>
     [HttpPost("rtmp/auth")]
     public async Task<IActionResult> RtmpAuth([FromForm] string name)
     {
+        // Validate shared secret (nginx passes it as a header)
+        var expectedSecret = configuration["NginxRtmp:CallbackSecret"];
+        if (!string.IsNullOrEmpty(expectedSecret))
+        {
+            var receivedSecret = Request.Headers["X-Rtmp-Secret"].ToString();
+            if (receivedSecret != expectedSecret)
+            {
+                logger.LogWarning("RTMP auth rejected: invalid secret from {IP}",
+                    HttpContext.Connection.RemoteIpAddress);
+                return StatusCode(403);
+            }
+        }
+
         var stream = await db.LiveStreams.FirstOrDefaultAsync(s => s.StreamKey == name);
         if (stream is null || stream.Status == StreamStatus.Ended)
         {
@@ -99,10 +123,18 @@ public class StreamsController(AppDbContext db, IConfiguration configuration, IL
         return Ok();
     }
 
-    // Called by nginx-rtmp on_publish_done callback
+    /// <summary>Called by nginx-rtmp on_publish_done. Same secret validation.</summary>
     [HttpPost("rtmp/done")]
     public async Task<IActionResult> RtmpDone([FromForm] string name)
     {
+        var expectedSecret = configuration["NginxRtmp:CallbackSecret"];
+        if (!string.IsNullOrEmpty(expectedSecret))
+        {
+            var receivedSecret = Request.Headers["X-Rtmp-Secret"].ToString();
+            if (receivedSecret != expectedSecret)
+                return StatusCode(403);
+        }
+
         var stream = await db.LiveStreams.FirstOrDefaultAsync(s => s.StreamKey == name);
         if (stream is not null && stream.Status == StreamStatus.Live)
         {
@@ -134,7 +166,6 @@ public class StreamsController(AppDbContext db, IConfiguration configuration, IL
         using var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
         var rtmpUrl = $"{configuration["NginxRtmp:RtmpUrl"]}/{stream.StreamKey}";
 
-        // Start FFmpeg process: stdin (webm) → RTMP
         var ffmpegArgs = $"-re -fflags +genpts -i pipe:0 " +
             "-c:v libx264 -preset veryfast -tune zerolatency -b:v 2000k " +
             "-c:a aac -b:a 128k " +
@@ -177,8 +208,13 @@ public class StreamsController(AppDbContext db, IConfiguration configuration, IL
         }
     }
 
-    private static StreamDto MapDto(LiveStream s) => new(
+    private static StreamAdminDto MapAdminDto(LiveStream s) => new(
         s.Id, s.Title, s.StreamKey, s.HlsUrl,
+        s.Status.ToString(), s.ScheduledAt, s.StartedAt, s.EndedAt, s.CreatedAt
+    );
+
+    private static StreamPublicDto MapPublicDto(LiveStream s) => new(
+        s.Id, s.Title, s.HlsUrl,
         s.Status.ToString(), s.ScheduledAt, s.StartedAt, s.EndedAt, s.CreatedAt
     );
 }

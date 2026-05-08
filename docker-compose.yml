@@ -106,7 +106,12 @@ services:
       Stripe__PublishableKey: ${STRIPE_PUBLISHABLE_KEY:-pk_test_disabled}
       NginxRtmp__RtmpUrl: rtmp://nginx-rtmp:1935/live
       NginxRtmp__HlsBaseUrl: http://${SERVER_IP:-localhost}:8090/hls
+      NginxRtmp__CallbackSecret: ${RTMP_CALLBACK_SECRET:-mude-este-secret-em-producao}
       Redis__ConnectionString: redis:6379
+      # CORS: origens permitidas em produção (frontend URL)
+      AllowedOrigins__0: http://${SERVER_IP:-localhost}:3002
+      AllowedOrigins__1: http://localhost:3002
+      AllowedOrigins__2: http://localhost:3000
       Admin__DefaultEmail: ${ADMIN_EMAIL:-admin@classroom.com}
       Admin__DefaultPassword: ${ADMIN_PASSWORD:-Admin@123456}
     ports:

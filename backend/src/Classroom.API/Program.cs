@@ -1,4 +1,5 @@
 using System.Text;
+using System.Threading.RateLimiting;
 using Classroom.API.Hubs;
 using Classroom.API.Middleware;
 using Classroom.Domain.Entities;
@@ -6,15 +7,25 @@ using Classroom.Domain.Enums;
 using Classroom.Infrastructure;
 using Classroom.Infrastructure.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Allow large request bodies for video chunk proxy uploads (chunks up to 12MB)
+// ── Forward headers from reverse proxies (nginx, Traefik, etc.) ───────────────
+// Required for correct IP detection, HTTPS detection, and HSTS
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
+// ── Request size limit ────────────────────────────────────────────────────────
 builder.WebHost.ConfigureKestrel(options =>
 {
-    options.Limits.MaxRequestBodySize = 12 * 1024 * 1024; // 12MB
+    options.Limits.MaxRequestBodySize = 12 * 1024 * 1024; // 12MB (video chunk proxy)
 });
 
 // ── Services ──────────────────────────────────────────────────────────────────
@@ -22,9 +33,9 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// JWT Authentication
+// ── JWT Authentication ─────────────────────────────────────────────────────────
 var jwtSecret = builder.Configuration["Jwt:Secret"]
-    ?? "default-dev-secret-change-in-production-must-be-at-least-32chars!!";
+    ?? throw new InvalidOperationException("Jwt:Secret must be configured");
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -41,7 +52,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ClockSkew = TimeSpan.Zero
         };
 
-        // Allow token from query string for SignalR and WebSocket endpoints
+        // Allow token from query string for SignalR hubs and WebSocket endpoints
         options.Events = new JwtBearerEvents
         {
             OnMessageReceived = context =>
@@ -58,37 +69,75 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
-// Infrastructure (EF Core, MinIO, Stripe, VideoProcessing)
+// ── Infrastructure (EF Core, MinIO, Stripe, VideoProcessing) ─────────────────
 builder.Services.AddInfrastructure(builder.Configuration);
 
-// SignalR + optional Redis backplane
+// ── SignalR + optional Redis backplane ────────────────────────────────────────
 var redisConnection = builder.Configuration["Redis:ConnectionString"];
 var signalR = builder.Services.AddSignalR();
 if (!string.IsNullOrWhiteSpace(redisConnection))
 {
     try { signalR.AddStackExchangeRedis(redisConnection); }
-    catch { /* Redis optional */ }
+    catch { /* Redis is optional */ }
 }
 
-// CORS – named policy, explicit — must be first in the pipeline
+// ── CORS ──────────────────────────────────────────────────────────────────────
+// In production, restrict to configured origins. In development, allow all.
+var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>();
+
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
+    options.AddPolicy("AppPolicy", policy =>
     {
-        policy.SetIsOriginAllowed(_ => true)
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
+        if (builder.Environment.IsDevelopment() || allowedOrigins is null || allowedOrigins.Length == 0)
+        {
+            // Development: allow everything
+            policy.SetIsOriginAllowed(_ => true)
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        }
+        else
+        {
+            // Production: restrict to declared origins
+            policy.WithOrigins(allowedOrigins)
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        }
     });
 });
 
-// Rate limiting
+// ── Rate limiting ─────────────────────────────────────────────────────────────
 builder.Services.AddRateLimiter(options =>
 {
-    options.AddPolicy("auth", context =>
-        System.Threading.RateLimiting.RateLimitPartition.GetFixedWindowLimiter(
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    // Strict: for login / auth endpoints (prevent brute-force)
+    options.AddPolicy("auth_strict", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
             context.Connection.RemoteIpAddress?.ToString() ?? "anon",
-            _ => new System.Threading.RateLimiting.FixedWindowRateLimiterOptions
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1)
+            }));
+
+    // General API: wider window, higher limit
+    options.AddPolicy("api_general", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "anon",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 300,
+                Window = TimeSpan.FromMinutes(1)
+            }));
+
+    // Upload: protect large upload initiation from abuse
+    options.AddPolicy("upload", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "anon",
+            _ => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = 20,
                 Window = TimeSpan.FromMinutes(1)
@@ -98,13 +147,25 @@ builder.Services.AddRateLimiter(options =>
 // ── App ────────────────────────────────────────────────────────────────────────
 var app = builder.Build();
 
-// CORS first — named policy — headers survive even on error responses
-app.UseCors("AllowAll");
+// Must be first: handle X-Forwarded-For / X-Forwarded-Proto from reverse proxies
+app.UseForwardedHeaders();
 
+// CORS first — headers must survive even on error responses
+app.UseCors("AppPolicy");
+
+// Security headers on all responses
+app.UseMiddleware<SecurityHeadersMiddleware>();
+
+// Global error handler — hides internals in production
 app.UseMiddleware<ExceptionMiddleware>();
 
-app.UseSwagger();
-app.UseSwaggerUI();
+// Swagger only in development
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
 app.UseWebSockets();
 app.UseAuthentication();
 app.UseAuthorization();
@@ -113,8 +174,9 @@ app.UseRateLimiter();
 app.MapControllers();
 app.MapHub<LiveStreamHub>("/hubs/livestream");
 
-// Health check endpoint
-app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }));
+// Health check (no auth, no rate limit)
+app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }))
+   .AllowAnonymous();
 
 // ── Database migration + seed ─────────────────────────────────────────────────
 using (var scope = app.Services.CreateScope())
@@ -127,7 +189,6 @@ using (var scope = app.Services.CreateScope())
         await db.Database.MigrateAsync();
         logger.LogInformation("✓ Database migrated");
 
-        // Seed default admin if no users exist
         if (!await db.Users.AnyAsync())
         {
             var adminEmail = builder.Configuration["Admin:DefaultEmail"] ?? "admin@classroom.com";
@@ -150,7 +211,7 @@ using (var scope = app.Services.CreateScope())
             });
 
             await db.SaveChangesAsync();
-            logger.LogInformation("✓ Admin seed: {Email} / {Password}", adminEmail, adminPassword);
+            logger.LogInformation("✓ Admin seed: {Email}", adminEmail);
         }
     }
     catch (Exception ex)

@@ -18,6 +18,7 @@ public class UsersController(AppDbContext db) : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult<List<UserDto>>> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
     {
+        pageSize = Math.Clamp(pageSize, 1, 100);
         var users = await db.Users
             .OrderByDescending(u => u.CreatedAt)
             .Skip((page - 1) * pageSize)

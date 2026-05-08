@@ -6,6 +6,7 @@ using Classroom.Infrastructure.Data;
 using Classroom.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
 namespace Classroom.API.Controllers;
@@ -17,6 +18,7 @@ public class AuthController(AppDbContext db, JwtTokenService jwt) : ControllerBa
     private string? ClientIp => HttpContext.Connection.RemoteIpAddress?.ToString();
 
     [HttpPost("login")]
+    [EnableRateLimiting("auth_strict")]
     public async Task<ActionResult<TokenResponse>> Login([FromBody] LoginRequest request)
     {
         var user = await db.Users
@@ -34,6 +36,7 @@ public class AuthController(AppDbContext db, JwtTokenService jwt) : ControllerBa
     }
 
     [HttpPost("refresh")]
+    [EnableRateLimiting("auth_strict")]
     public async Task<ActionResult<TokenResponse>> Refresh()
     {
         var token = Request.Cookies["refreshToken"];

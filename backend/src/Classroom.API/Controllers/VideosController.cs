@@ -5,6 +5,7 @@ using Classroom.Infrastructure.Data;
 using Classroom.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
 namespace Classroom.API.Controllers;
@@ -19,6 +20,7 @@ public class VideosController(AppDbContext db, MinIOStorageService storage, Vide
 
     [HttpPost("upload/initiate")]
     [Authorize(Roles = "Admin")]
+    [EnableRateLimiting("upload")]
     public async Task<ActionResult<InitiateUploadResponse>> InitiateUpload([FromBody] InitiateUploadRequest request)
     {
         var video = new Video

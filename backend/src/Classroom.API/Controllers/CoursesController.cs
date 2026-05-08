@@ -20,6 +20,7 @@ public class CoursesController(AppDbContext db, StripeService stripe) : Controll
     [HttpGet]
     public async Task<ActionResult<List<CourseDto>>> GetAll([FromQuery] bool? published, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
     {
+        pageSize = Math.Clamp(pageSize, 1, 50); // never dump entire table
         var isAdmin = User.IsInRole("Admin");
         var query = db.Courses.AsQueryable();
 
