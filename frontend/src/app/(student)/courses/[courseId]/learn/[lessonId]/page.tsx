@@ -12,6 +12,7 @@ import {
   Play, FileText, Loader2,
 } from "lucide-react";
 import Link from "next/link";
+import { LessonComments } from "@/components/lesson/LessonComments";
 
 const S = {
   rose: "#D4437C",
@@ -278,6 +279,9 @@ export default function LessonPlayerPage() {
                 </Link>
               ) : <div />}
             </div>
+
+            {/* Comments */}
+            <LessonComments lessonId={lessonId} />
           </div>
         </div>
       </div>

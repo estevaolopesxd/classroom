@@ -12,8 +12,9 @@ import { VideoTutorial } from "@/components/video/VideoTutorial";
 import {
   ArrowLeft, Plus, Trash2, GripVertical, ChevronDown, ChevronRight,
   Loader2, Eye, EyeOff, BookOpen, Video, FileText, Save, DollarSign, Play,
-  ImagePlus,
+  ImagePlus, Tag, X,
 } from "lucide-react";
+import api from "@/lib/api/client";
 import { toast } from "sonner";
 import Link from "next/link";
 
@@ -227,6 +228,12 @@ export default function CourseEditorPage() {
   const [lessonForm, setLessonForm] = useState({ title: "", type: "Video", isFreePreview: false, textContent: "" });
   const [lessonLoading, setLessonLoading] = useState(false);
 
+  // Category + tags
+  const [categories, setCategories] = useState<{ id: string; name: string; color: string; icon?: string }[]>([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState("");
+
   // Video modal (adicionar/trocar vídeo)
   const [videoModal, setVideoModal] = useState<{ open: boolean; lesson: Lesson | null }>({ open: false, lesson: null });
   const [videoTab, setVideoTab] = useState<"upload" | "record">("upload");
@@ -237,7 +244,10 @@ export default function CourseEditorPage() {
   /* ── Data loading ─────────────────────────────────────────── */
   const load = useCallback(async () => {
     try {
-      const data = await coursesApi.getById(courseId);
+      const [data, catRes] = await Promise.all([
+        coursesApi.getById(courseId),
+        api.get<{ id: string; name: string; color: string; icon?: string }[]>("/api/categories"),
+      ]);
       setCourse(data);
       setCourseForm({
         title: data.title,
@@ -248,6 +258,15 @@ export default function CourseEditorPage() {
       });
       setSaleEnabled(data.isForSale);
       setPricingType((data.pricingType as PricingType) || "OneTime");
+      setCategories(catRes.data);
+      setSelectedCategoryId(data.categoryId || null);
+      // Tags stored as JSON string
+      if (data.tags) {
+        try {
+          const parsed = JSON.parse(data.tags);
+          setTags(Array.isArray(parsed) ? parsed : []);
+        } catch { setTags([]); }
+      } else { setTags([]); }
     } catch {
       toast.error("Erro ao carregar curso");
     } finally {
@@ -266,6 +285,8 @@ export default function CourseEditorPage() {
         description: courseForm.description || undefined,
         shortDescription: courseForm.shortDescription || undefined,
         level: courseForm.level || undefined,
+        categoryId: selectedCategoryId,
+        tags: tags.length > 0 ? JSON.stringify(tags) : null,
       });
       toast.success("Curso salvo");
       load();
@@ -693,6 +714,91 @@ export default function CourseEditorPage() {
               <option value="Avançado">Avançado</option>
             </select>
           </div>
+
+          {/* Category */}
+          {categories.length > 0 && (
+            <div>
+              <label style={labelStyle}>Categoria</label>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  onClick={() => setSelectedCategoryId(null)}
+                  style={{
+                    padding: "6px 14px", borderRadius: 100, fontSize: 13, fontWeight: 600,
+                    border: `1.5px solid ${!selectedCategoryId ? S.rose : S.border}`,
+                    background: !selectedCategoryId ? `${S.rose}12` : S.white,
+                    color: !selectedCategoryId ? S.rose : S.muted,
+                    cursor: "pointer", fontFamily: "inherit",
+                  }}
+                >
+                  Nenhuma
+                </button>
+                {categories.map(cat => {
+                  const isActive = selectedCategoryId === cat.id;
+                  return (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => setSelectedCategoryId(isActive ? null : cat.id)}
+                      style={{
+                        padding: "6px 14px", borderRadius: 100, fontSize: 13, fontWeight: 600,
+                        border: `1.5px solid ${isActive ? cat.color : S.border}`,
+                        background: isActive ? `${cat.color}15` : S.white,
+                        color: isActive ? cat.color : S.muted,
+                        cursor: "pointer", fontFamily: "inherit",
+                        display: "inline-flex", alignItems: "center", gap: 5,
+                      }}
+                    >
+                      {cat.icon && <span style={{ fontSize: 13 }}>{cat.icon}</span>}
+                      {cat.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Tags */}
+          <div>
+            <label style={labelStyle}>Tags</label>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: tags.length > 0 ? 8 : 0 }}>
+              {tags.map(tag => (
+                <span key={tag} style={{
+                  display: "inline-flex", alignItems: "center", gap: 4,
+                  padding: "4px 10px", borderRadius: 100, fontSize: 12, fontWeight: 600,
+                  background: `${S.rose}12`, color: S.rose, border: `1px solid ${S.rose}33`,
+                }}>
+                  <Tag size={10} />
+                  {tag}
+                  <button
+                    type="button"
+                    onClick={() => setTags(prev => prev.filter(t => t !== tag))}
+                    style={{ background: "none", border: "none", cursor: "pointer", padding: 0, display: "flex", color: S.rose }}
+                  >
+                    <X size={11} />
+                  </button>
+                </span>
+              ))}
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <input
+                value={tagInput}
+                onChange={e => setTagInput(e.target.value)}
+                onKeyDown={e => {
+                  if ((e.key === "Enter" || e.key === ",") && tagInput.trim()) {
+                    e.preventDefault();
+                    const val = tagInput.trim().toLowerCase();
+                    if (!tags.includes(val)) setTags(prev => [...prev, val]);
+                    setTagInput("");
+                  }
+                }}
+                placeholder="Digite uma tag e pressione Enter..."
+                style={{ ...inputStyle, flex: 1 }}
+              />
+            </div>
+            <p style={{ fontSize: 11, color: S.muted, margin: "4px 0 0" }}>Pressione Enter ou vírgula para adicionar uma tag</p>
+          </div>
+
           <div>
             <BtnRose onClick={saveCourse} disabled={saving}>
               {saving ? <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} /> : <Save size={14} />}

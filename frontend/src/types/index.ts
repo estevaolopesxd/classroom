@@ -55,6 +55,12 @@ export interface Course {
   totalLessons: number;
   createdAt: string;
   updatedAt: string;
+  categoryId?: string;
+  categoryName?: string;
+  categoryColor?: string;
+  tags?: string;
+  averageRating?: number;
+  totalRatings?: number;
 }
 
 export interface CourseDetail extends Course {

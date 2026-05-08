@@ -25,6 +25,7 @@ public class AdminController(AppDbContext db) : ControllerBase
 
         var recentCourses = await db.Courses
             .Include(c => c.Modules).ThenInclude(m => m.Lessons)
+            .Include(c => c.Category)
             .OrderByDescending(c => c.CreatedAt)
             .Take(5)
             .Select(c => new CourseDto(
@@ -32,7 +33,8 @@ public class AdminController(AppDbContext db) : ControllerBase
                 c.Status.ToString(), c.IsForSale, c.Price, c.Currency, c.PricingType.ToString(),
                 c.Level, c.DurationMinutes,
                 c.Modules.Count, c.Modules.Sum(m => m.Lessons.Count),
-                c.CreatedAt, c.UpdatedAt))
+                c.CreatedAt, c.UpdatedAt,
+                c.CategoryId, c.Category != null ? c.Category.Name : null, c.Category != null ? c.Category.Color : null, c.Tags))
             .ToListAsync();
 
         var recentUsers = await db.Users

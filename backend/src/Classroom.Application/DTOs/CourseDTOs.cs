@@ -17,7 +17,15 @@ public record CourseDto(
     int TotalModules,
     int TotalLessons,
     DateTime CreatedAt,
-    DateTime UpdatedAt
+    DateTime UpdatedAt,
+    // Category & tags
+    Guid? CategoryId = null,
+    string? CategoryName = null,
+    string? CategoryColor = null,
+    string? Tags = null,
+    // Rating
+    double AverageRating = 0,
+    int TotalRatings = 0
 );
 
 public record CourseDetailDto(
@@ -36,7 +44,13 @@ public record CourseDetailDto(
     int? DurationMinutes,
     List<ModuleDto> Modules,
     DateTime CreatedAt,
-    DateTime UpdatedAt
+    DateTime UpdatedAt,
+    Guid? CategoryId = null,
+    string? CategoryName = null,
+    string? CategoryColor = null,
+    string? Tags = null,
+    double AverageRating = 0,
+    int TotalRatings = 0
 );
 
 public record CreateCourseRequest(
@@ -54,7 +68,9 @@ public record UpdateCourseRequest(
     string? ShortDescription,
     string? ThumbnailUrl,
     string? Level,
-    int? DurationMinutes
+    int? DurationMinutes,
+    Guid? CategoryId = null,
+    string? Tags = null
 );
 
 public record UpdateSaleSettingsRequest(

@@ -20,7 +20,7 @@ export const coursesApi = {
   create: (data: { title: string; description?: string; shortDescription?: string; level?: string; price?: number; currency?: string }) =>
     api.post<Course>("/api/courses", data).then((r) => r.data),
 
-  update: (id: string, data: Partial<Course>) =>
+  update: (id: string, data: Omit<Partial<Course>, "categoryId" | "tags"> & { categoryId?: string | null; tags?: string | null }) =>
     api.put<Course>(`/api/courses/${id}`, data).then((r) => r.data),
 
   publish: (id: string) =>

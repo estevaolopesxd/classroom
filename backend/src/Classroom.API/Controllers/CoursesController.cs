@@ -18,28 +18,56 @@ public class CoursesController(AppDbContext db, StripeService stripe, MinIOStora
     private Guid CurrentUserId => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
     [HttpGet]
-    public async Task<ActionResult<List<CourseDto>>> GetAll([FromQuery] bool? published, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+    public async Task<ActionResult<List<CourseDto>>> GetAll(
+        [FromQuery] bool? published,
+        [FromQuery] Guid? categoryId,
+        [FromQuery] string? tag,
+        [FromQuery] string? search,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20)
     {
-        pageSize = Math.Clamp(pageSize, 1, 50); // never dump entire table
+        pageSize = Math.Clamp(pageSize, 1, 50);
         var isAdmin = User.IsInRole("Admin");
-        var query = db.Courses.AsQueryable();
+        var query = db.Courses.Include(c => c.Modules).ThenInclude(m => m.Lessons)
+                               .Include(c => c.Category)
+                               .AsQueryable();
 
         if (!isAdmin)
             query = query.Where(c => c.Status == CourseStatus.Published);
         else if (published.HasValue)
             query = query.Where(c => published.Value ? c.Status == CourseStatus.Published : c.Status != CourseStatus.Published);
 
+        if (categoryId.HasValue)
+            query = query.Where(c => c.CategoryId == categoryId.Value);
+
+        if (!string.IsNullOrWhiteSpace(tag))
+            query = query.Where(c => c.Tags != null && c.Tags.Contains(tag));
+
+        if (!string.IsNullOrWhiteSpace(search))
+            query = query.Where(c => EF.Functions.ILike(c.Title, $"%{search}%") ||
+                                      (c.ShortDescription != null && EF.Functions.ILike(c.ShortDescription, $"%{search}%")));
+
+        var total = await query.CountAsync();
         var courses = await query
-            .Include(c => c.Modules).ThenInclude(m => m.Lessons)
             .OrderByDescending(c => c.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(c => MapDto(c))
             .ToListAsync();
 
-        var total = await query.CountAsync();
+        // Load rating averages
+        var courseIds = courses.Select(c => c.Id).ToList();
+        var ratings = await db.CourseRatings
+            .Where(r => courseIds.Contains(r.CourseId))
+            .GroupBy(r => r.CourseId)
+            .Select(g => new { CourseId = g.Key, Avg = g.Average(r => (double)r.Rating), Count = g.Count() })
+            .ToDictionaryAsync(x => x.CourseId);
+
         Response.Headers["X-Total-Count"] = total.ToString();
-        return Ok(courses);
+        return Ok(courses.Select(c =>
+        {
+            ratings.TryGetValue(c.Id, out var r);
+            return MapDto(c, r?.Avg ?? 0, r?.Count ?? 0);
+        }));
     }
 
     /// <summary>Enroll the authenticated user in a free course (no Stripe needed).</summary>
@@ -96,13 +124,14 @@ public class CoursesController(AppDbContext db, StripeService stripe, MinIOStora
             .Include(c => c.Modules.OrderBy(m => m.Order))
                 .ThenInclude(m => m.Lessons.OrderBy(l => l.Order))
                     .ThenInclude(l => l.Video)
+            .Include(c => c.Category)
             .FirstOrDefaultAsync(c => c.Id == id);
 
         if (course is null) return NotFound();
         if (!isAdmin && course.Status != CourseStatus.Published)
             return NotFound();
 
-        return Ok(MapDetailDto(course));
+        return Ok(await MapDetailDtoAsync(course));
     }
 
     [HttpGet("slug/{slug}")]
@@ -113,13 +142,14 @@ public class CoursesController(AppDbContext db, StripeService stripe, MinIOStora
             .Include(c => c.Modules.OrderBy(m => m.Order))
                 .ThenInclude(m => m.Lessons.OrderBy(l => l.Order))
                     .ThenInclude(l => l.Video)
+            .Include(c => c.Category)
             .FirstOrDefaultAsync(c => c.Slug == slug);
 
         if (course is null) return NotFound();
         if (!isAdmin && course.Status != CourseStatus.Published)
             return NotFound();
 
-        return Ok(MapDetailDto(course));
+        return Ok(await MapDetailDtoAsync(course));
     }
 
     [HttpPost]
@@ -161,6 +191,9 @@ public class CoursesController(AppDbContext db, StripeService stripe, MinIOStora
         if (request.ThumbnailUrl is not null) course.ThumbnailUrl = request.ThumbnailUrl;
         if (request.Level is not null) course.Level = request.Level;
         if (request.DurationMinutes.HasValue) course.DurationMinutes = request.DurationMinutes;
+        // Category & tags (explicit null = unset)
+        course.CategoryId = request.CategoryId;
+        if (request.Tags is not null) course.Tags = request.Tags;
 
         await db.SaveChangesAsync();
         return Ok(MapDto(course));
@@ -319,30 +352,43 @@ public class CoursesController(AppDbContext db, StripeService stripe, MinIOStora
         return slug;
     }
 
-    private static CourseDto MapDto(Course c) => new(
+    private static CourseDto MapDto(Course c, double avgRating = 0, int totalRatings = 0) => new(
         c.Id, c.Title, c.Slug, c.Description, c.ShortDescription, c.ThumbnailUrl,
         c.Status.ToString(), c.IsForSale, c.Price, c.Currency, c.PricingType.ToString(),
         c.Level, c.DurationMinutes,
         c.Modules.Count, c.Modules.Sum(m => m.Lessons.Count),
-        c.CreatedAt, c.UpdatedAt
+        c.CreatedAt, c.UpdatedAt,
+        c.CategoryId, c.Category?.Name, c.Category?.Color, c.Tags,
+        avgRating, totalRatings
     );
 
-    private static CourseDetailDto MapDetailDto(Course c) => new(
-        c.Id, c.Title, c.Slug, c.Description, c.ShortDescription, c.ThumbnailUrl,
-        c.Status.ToString(), c.IsForSale, c.Price, c.Currency, c.PricingType.ToString(),
-        c.Level, c.DurationMinutes,
-        c.Modules.OrderBy(m => m.Order).Select(m => new ModuleDto(
-            m.Id, m.CourseId, m.Title, m.Description, m.Order, m.IsIntro,
-            m.Lessons.Count,
-            m.Lessons.OrderBy(l => l.Order).Select(l => new LessonDto(
-                l.Id, l.ModuleId, l.Title, l.Description, l.Type.ToString(),
-                l.Order, l.DurationSeconds, l.IsFreePreview,
-                l.VideoId,
-                l.Video?.HlsKey,
-                l.Video is null ? null : new Application.DTOs.VideoStatus(l.Video.Status.ToString(), l.Video.HlsKey, l.Video.ThumbnailKey, l.Video.DurationSeconds),
-                l.TextContent
-            )).ToList()
-        )).ToList(),
-        c.CreatedAt, c.UpdatedAt
-    );
+    private async Task<CourseDetailDto> MapDetailDtoAsync(Course c)
+    {
+        var ratingData = await db.CourseRatings
+            .Where(r => r.CourseId == c.Id)
+            .GroupBy(r => r.CourseId)
+            .Select(g => new { Avg = g.Average(r => (double)r.Rating), Count = g.Count() })
+            .FirstOrDefaultAsync();
+
+        return new CourseDetailDto(
+            c.Id, c.Title, c.Slug, c.Description, c.ShortDescription, c.ThumbnailUrl,
+            c.Status.ToString(), c.IsForSale, c.Price, c.Currency, c.PricingType.ToString(),
+            c.Level, c.DurationMinutes,
+            c.Modules.OrderBy(m => m.Order).Select(m => new ModuleDto(
+                m.Id, m.CourseId, m.Title, m.Description, m.Order, m.IsIntro,
+                m.Lessons.Count,
+                m.Lessons.OrderBy(l => l.Order).Select(l => new LessonDto(
+                    l.Id, l.ModuleId, l.Title, l.Description, l.Type.ToString(),
+                    l.Order, l.DurationSeconds, l.IsFreePreview,
+                    l.VideoId,
+                    l.Video?.HlsKey,
+                    l.Video is null ? null : new Application.DTOs.VideoStatus(l.Video.Status.ToString(), l.Video.HlsKey, l.Video.ThumbnailKey, l.Video.DurationSeconds),
+                    l.TextContent
+                )).ToList()
+            )).ToList(),
+            c.CreatedAt, c.UpdatedAt,
+            c.CategoryId, c.Category?.Name, c.Category?.Color, c.Tags,
+            ratingData?.Avg ?? 0, ratingData?.Count ?? 0
+        );
+    }
 }

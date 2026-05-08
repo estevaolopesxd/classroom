@@ -21,8 +21,11 @@ public class Course : BaseEntity
     public string? Level { get; set; }
     public int? DurationMinutes { get; set; }
     public Guid CreatedById { get; set; }
+    public Guid? CategoryId { get; set; }
+    public string? Tags { get; set; }   // JSON array: ["nail art","gel"]
 
     public User CreatedBy { get; set; } = null!;
+    public Category? Category { get; set; }
     public Video? TrailerVideo { get; set; }
     public ICollection<Module> Modules { get; set; } = new List<Module>();
     public ICollection<CourseEnrollment> Enrollments { get; set; } = new List<CourseEnrollment>();

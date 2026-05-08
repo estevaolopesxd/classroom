@@ -20,6 +20,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Certificate> Certificates => Set<Certificate>();
     public DbSet<CertificateConfig> CertificateConfigs => Set<CertificateConfig>();
     public DbSet<CertificateSponsor> CertificateSponsors => Set<CertificateSponsor>();
+    public DbSet<LessonComment> LessonComments => Set<LessonComment>();
+    public DbSet<CourseRating> CourseRatings => Set<CourseRating>();
+    public DbSet<Category> Categories => Set<Category>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
