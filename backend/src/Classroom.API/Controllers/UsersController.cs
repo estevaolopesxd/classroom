@@ -92,6 +92,98 @@ public class UsersController(AppDbContext db) : ControllerBase
         return NoContent();
     }
 
+    // ── Enrollment management (Admin) ─────────────────────────────────────
+
+    [HttpGet("{id:guid}/enrollments")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> GetEnrollments(Guid id)
+    {
+        if (!await db.Users.AnyAsync(u => u.Id == id)) return NotFound();
+
+        var enrollments = await db.CourseEnrollments
+            .Where(e => e.UserId == id)
+            .Include(e => e.Course)
+                .ThenInclude(c => c.Modules)
+                    .ThenInclude(m => m.Lessons)
+            .OrderByDescending(e => e.EnrolledAt)
+            .ToListAsync();
+
+        var lessonIds = enrollments
+            .SelectMany(e => e.Course.Modules)
+            .SelectMany(m => m.Lessons)
+            .Select(l => l.Id)
+            .ToList();
+
+        var progresses = await db.LessonProgresses
+            .Where(lp => lp.UserId == id && lessonIds.Contains(lp.LessonId))
+            .ToDictionaryAsync(lp => lp.LessonId);
+
+        var result = enrollments.Select(e =>
+        {
+            var allLessons = e.Course.Modules.SelectMany(m => m.Lessons).ToList();
+            var completed = allLessons.Count(l => progresses.TryGetValue(l.Id, out var p) && p.IsCompleted);
+            return new
+            {
+                enrollmentId = e.Id,
+                courseId = e.CourseId,
+                courseTitle = e.Course.Title,
+                courseThumbnailUrl = e.Course.ThumbnailUrl,
+                enrolledAt = e.EnrolledAt,
+                source = e.Source.ToString(),
+                subscriptionStatus = e.SubscriptionStatus.ToString(),
+                currentPeriodEnd = e.CurrentPeriodEnd,
+                totalLessons = allLessons.Count,
+                completedLessons = completed,
+                progressPercent = allLessons.Count > 0
+                    ? Math.Round((double)completed / allLessons.Count * 100, 1)
+                    : 0.0
+            };
+        });
+
+        return Ok(result);
+    }
+
+    [HttpPost("{id:guid}/enrollments")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> AddEnrollment(Guid id, [FromBody] AdminEnrollRequest request)
+    {
+        if (!await db.Users.AnyAsync(u => u.Id == id)) return NotFound(new { message = "Usuário não encontrado" });
+
+        var course = await db.Courses.FindAsync(request.CourseId);
+        if (course is null) return NotFound(new { message = "Curso não encontrado" });
+
+        var already = await db.CourseEnrollments
+            .AnyAsync(e => e.UserId == id && e.CourseId == request.CourseId);
+        if (already) return Conflict(new { message = "Aluno já está matriculado neste curso" });
+
+        db.CourseEnrollments.Add(new CourseEnrollment
+        {
+            UserId = id,
+            CourseId = request.CourseId,
+            Source = EnrollmentSource.Admin,
+            SubscriptionStatus = SubscriptionStatus.None
+        });
+        await db.SaveChangesAsync();
+
+        return Ok(new { message = "Matriculado com sucesso" });
+    }
+
+    [HttpDelete("{id:guid}/enrollments/{courseId:guid}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> RemoveEnrollment(Guid id, Guid courseId)
+    {
+        var enrollment = await db.CourseEnrollments
+            .FirstOrDefaultAsync(e => e.UserId == id && e.CourseId == courseId);
+
+        if (enrollment is null) return NotFound(new { message = "Matrícula não encontrada" });
+
+        db.CourseEnrollments.Remove(enrollment);
+        await db.SaveChangesAsync();
+        return NoContent();
+    }
+
+    // ── Progress (kept for backward compat) ──────────────────────────────
+
     [HttpGet("{id:guid}/progress")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> GetUserProgress(Guid id)
@@ -124,7 +216,9 @@ public class UsersController(AppDbContext db) : ControllerBase
                 enrolledAt = e.EnrolledAt,
                 totalLessons = allLessons.Count,
                 completedLessons = completed,
-                percentComplete = allLessons.Count > 0 ? Math.Round((double)completed / allLessons.Count * 100, 1) : 0
+                percentComplete = allLessons.Count > 0
+                    ? Math.Round((double)completed / allLessons.Count * 100, 1)
+                    : 0.0
             };
         });
 

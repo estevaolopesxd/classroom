@@ -27,6 +27,16 @@ export const adminApi = {
   getUserProgress: (id: string) =>
     api.get(`/api/users/${id}/progress`).then((r) => r.data),
 
+  // Enrollment management
+  getEnrollments: (userId: string) =>
+    api.get(`/api/users/${userId}/enrollments`).then((r) => r.data),
+
+  addEnrollment: (userId: string, courseId: string) =>
+    api.post(`/api/users/${userId}/enrollments`, { courseId }).then((r) => r.data),
+
+  removeEnrollment: (userId: string, courseId: string) =>
+    api.delete(`/api/users/${userId}/enrollments/${courseId}`),
+
   // Streams
   getStreams: () =>
     api.get("/api/streams").then((r) => r.data),

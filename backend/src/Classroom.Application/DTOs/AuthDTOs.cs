@@ -34,3 +34,5 @@ public record UpdateUserRequest(
     string? AvatarUrl,
     bool? IsActive
 );
+
+public record AdminEnrollRequest(Guid CourseId);
