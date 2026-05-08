@@ -3,6 +3,7 @@
 import { useRef, useState, useEffect } from "react";
 import { Video, Square, Loader2, Wifi, WifiOff, Camera, Monitor } from "lucide-react";
 import { toast } from "sonner";
+import { useAuthStore } from "@/lib/stores/authStore";
 
 /* Fix WebSocket URL so the browser connects to the real server hostname */
 function fixWsUrl(url: string): string {
@@ -41,6 +42,7 @@ export function LiveStreamBroadcaster({ streamId, apiBaseUrl, onStarted, onEnded
   const [state, setState] = useState<BroadcastState>("idle");
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval>>(null);
+  const accessToken = useAuthStore(s => s.accessToken);
 
   useEffect(() => {
     return () => { cleanup(); };
@@ -75,10 +77,12 @@ export function LiveStreamBroadcaster({ streamId, apiBaseUrl, onStarted, onEnded
         videoRef.current.play();
       }
 
-      // Build WebSocket URL with runtime hostname correction
+      // Build WebSocket URL with runtime hostname correction + JWT token
       const rawWsUrl = `${apiBaseUrl.replace(/^http/, "ws")}/api/streams/${streamId}/broadcast`;
       const wsUrl = fixWsUrl(rawWsUrl);
-      const ws = new WebSocket(wsUrl);
+      const token = accessToken ?? localStorage.getItem("accessToken") ?? "";
+      const wsUrlWithToken = `${wsUrl}${wsUrl.includes("?") ? "&" : "?"}access_token=${encodeURIComponent(token)}`;
+      const ws = new WebSocket(wsUrlWithToken);
       wsRef.current = ws;
 
       ws.onopen = () => {

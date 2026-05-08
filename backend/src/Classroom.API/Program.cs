@@ -41,14 +41,15 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ClockSkew = TimeSpan.Zero
         };
 
-        // Allow token from query string for SignalR
+        // Allow token from query string for SignalR and WebSocket endpoints
         options.Events = new JwtBearerEvents
         {
             OnMessageReceived = context =>
             {
                 var path = context.HttpContext.Request.Path;
                 var accessToken = context.Request.Query["access_token"];
-                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
+                if (!string.IsNullOrEmpty(accessToken) &&
+                    (path.StartsWithSegments("/hubs") || path.StartsWithSegments("/api/streams")))
                     context.Token = accessToken;
                 return Task.CompletedTask;
             }
