@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { adminApi } from "@/lib/api/admin";
+import { ImageUpload } from "@/components/ui/ImageUpload";
 import { Award, Plus, Trash2, Save, Eye, GripVertical, CheckCircle } from "lucide-react";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -313,13 +314,13 @@ export default function CertificatesAdminPage() {
                   placeholder="Ex: Academia de Beleza Silva" />
               </div>
               <div style={fieldWrap}>
-                <label style={labelStyle}>URL do Logo da Instituição</label>
-                <input style={inputStyle} value={config.institutionLogoUrl}
-                  onChange={e => set("institutionLogoUrl", e.target.value)}
-                  placeholder="https://..." />
-                <span style={{ fontSize: 11, color: "#6B3A5A", marginTop: 4, display: "block" }}>
-                  Cole a URL do logo hospedado no MinIO ou em qualquer CDN
-                </span>
+                <ImageUpload
+                  label="Logo da Instituição"
+                  value={config.institutionLogoUrl}
+                  onChange={url => set("institutionLogoUrl", url)}
+                  folder="logos"
+                  hint="Recomendado: PNG ou SVG transparente, máx. 5 MB"
+                />
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                 <div style={fieldWrap}>
@@ -336,10 +337,13 @@ export default function CertificatesAdminPage() {
                 </div>
               </div>
               <div style={fieldWrap}>
-                <label style={labelStyle}>URL da Assinatura (imagem PNG/SVG)</label>
-                <input style={inputStyle} value={config.signatureImageUrl}
-                  onChange={e => set("signatureImageUrl", e.target.value)}
-                  placeholder="https://..." />
+                <ImageUpload
+                  label="Imagem da Assinatura (PNG/SVG transparente)"
+                  value={config.signatureImageUrl}
+                  onChange={url => set("signatureImageUrl", url)}
+                  folder="signatures"
+                  hint="Fundo transparente garante melhor resultado no certificado"
+                />
               </div>
               <div style={fieldWrap}>
                 <label style={labelStyle}>Cidade</label>
@@ -445,19 +449,21 @@ export default function CertificatesAdminPage() {
                   <Plus size={14} style={{ verticalAlign: "middle", marginRight: 6 }} />
                   Adicionar patrocinador / logo
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
-                  <div>
-                    <label style={labelStyle}>Nome *</label>
-                    <input style={inputStyle} value={newSponsor.name}
-                      onChange={e => setNewSponsor(p => ({ ...p, name: e.target.value }))}
-                      placeholder="Ex: Salon Line" />
-                  </div>
-                  <div>
-                    <label style={labelStyle}>URL do Logo</label>
-                    <input style={inputStyle} value={newSponsor.logoUrl}
-                      onChange={e => setNewSponsor(p => ({ ...p, logoUrl: e.target.value }))}
-                      placeholder="https://..." />
-                  </div>
+                <div style={{ marginBottom: 12 }}>
+                  <label style={labelStyle}>Nome *</label>
+                  <input style={inputStyle} value={newSponsor.name}
+                    onChange={e => setNewSponsor(p => ({ ...p, name: e.target.value }))}
+                    placeholder="Ex: Salon Line" />
+                </div>
+                <div style={{ marginBottom: 14 }}>
+                  <ImageUpload
+                    label="Logo do Patrocinador"
+                    value={newSponsor.logoUrl}
+                    onChange={url => setNewSponsor(p => ({ ...p, logoUrl: url }))}
+                    folder="sponsors"
+                    hint="PNG ou SVG transparente recomendado"
+                    compact={false}
+                  />
                 </div>
                 <button
                   onClick={handleAddSponsor}
@@ -473,7 +479,7 @@ export default function CertificatesAdminPage() {
               </div>
 
               <div style={{ marginTop: 16, fontSize: 12, color: "#6B3A5A" }}>
-                Dica: Salve a configuração antes de adicionar patrocinadores.
+                Dica: Salve a configuração geral antes de adicionar patrocinadores.
               </div>
             </div>
           )}
