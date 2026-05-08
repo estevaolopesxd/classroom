@@ -41,6 +41,34 @@ public class CoursesController(AppDbContext db, StripeService stripe) : Controll
         return Ok(courses);
     }
 
+    /// <summary>Enroll the authenticated user in a free course (no Stripe needed).</summary>
+    [HttpPost("{id:guid}/enroll-free")]
+    [Authorize]
+    public async Task<IActionResult> EnrollFree(Guid id)
+    {
+        var userId = CurrentUserId;
+        var course = await db.Courses.FindAsync(id);
+        if (course is null) return NotFound();
+        if (course.Status != CourseStatus.Published)
+            return BadRequest(new { message = "Curso não está disponível" });
+        if (course.IsForSale && course.Price.HasValue && course.Price.Value > 0)
+            return BadRequest(new { message = "Este curso é pago. Use o checkout." });
+
+        var alreadyEnrolled = await db.CourseEnrollments
+            .AnyAsync(e => e.UserId == userId && e.CourseId == id);
+        if (alreadyEnrolled)
+            return Ok(new { message = "Já inscrito" });
+
+        db.CourseEnrollments.Add(new CourseEnrollment
+        {
+            UserId = userId,
+            CourseId = id,
+            Source = EnrollmentSource.Free
+        });
+        await db.SaveChangesAsync();
+        return Ok(new { message = "Inscrito com sucesso" });
+    }
+
     [HttpGet("my")]
     [Authorize]
     public async Task<ActionResult<List<CourseDto>>> GetMyCourses()

@@ -7,12 +7,22 @@ import { videosApi } from "@/lib/api/videos";
 import { progressApi } from "@/lib/api/progress";
 import type { CourseDetail, LessonProgress } from "@/types";
 import { VideoPlayer } from "@/components/video/VideoPlayer";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { CheckCircle, Circle, ChevronLeft, ChevronRight, BookOpen, Play, FileText, Loader2, Lock } from "lucide-react";
+import {
+  CheckCircle, Circle, ChevronLeft, ChevronRight,
+  Play, FileText, Loader2,
+} from "lucide-react";
 import Link from "next/link";
+
+const S = {
+  rose: "#D4437C",
+  roseDark: "#8B1A42",
+  bg: "#F8F3F6",
+  white: "#FFFFFF",
+  ink: "#1A0A12",
+  muted: "#8B6676",
+  border: "#EDCFDE",
+  green: "#16a34a",
+};
 
 export default function LessonPlayerPage() {
   const { courseId, lessonId } = useParams<{ courseId: string; lessonId: string }>();
@@ -22,19 +32,19 @@ export default function LessonPlayerPage() {
   const [progress, setProgress] = useState<Map<string, LessonProgress>>(new Map());
   const [loading, setLoading] = useState(true);
 
-  const currentModule = course?.modules.find(m => m.lessons.some(l => l.id === lessonId));
-  const currentLesson = currentModule?.lessons.find(l => l.id === lessonId);
-  const allLessons = course?.modules.flatMap(m => m.lessons) ?? [];
-  const currentIndex = allLessons.findIndex(l => l.id === lessonId);
+  const currentModule = course?.modules.find((m) => m.lessons.some((l) => l.id === lessonId));
+  const currentLesson = currentModule?.lessons.find((l) => l.id === lessonId);
+  const allLessons = course?.modules.flatMap((m) => m.lessons) ?? [];
+  const currentIndex = allLessons.findIndex((l) => l.id === lessonId);
   const prevLesson = currentIndex > 0 ? allLessons[currentIndex - 1] : null;
   const nextLesson = currentIndex < allLessons.length - 1 ? allLessons[currentIndex + 1] : null;
-  const completedCount = [...progress.values()].filter(p => p.isCompleted).length;
-  const progressPercent = allLessons.length > 0 ? Math.round(completedCount / allLessons.length * 100) : 0;
+  const completedCount = [...progress.values()].filter((p) => p.isCompleted).length;
+  const progressPercent = allLessons.length > 0 ? Math.round((completedCount / allLessons.length) * 100) : 0;
 
   useEffect(() => {
     Promise.all([
       coursesApi.getById(courseId),
-      progressApi.getCourseProgress(courseId).catch(() => null)
+      progressApi.getCourseProgress(courseId).catch(() => null),
     ]).then(([c, prog]) => {
       setCourse(c);
       if (prog) {
@@ -55,7 +65,7 @@ export default function LessonPlayerPage() {
   }, [currentLesson?.videoId]);
 
   const handleLessonComplete = () => {
-    setProgress(prev => {
+    setProgress((prev) => {
       const next = new Map(prev);
       next.set(lessonId, { lessonId, title: currentLesson?.title ?? "", isCompleted: true, watchedSeconds: 0 });
       return next;
@@ -64,49 +74,85 @@ export default function LessonPlayerPage() {
   };
 
   if (loading) return (
-    <div className="flex items-center justify-center min-h-screen">
-      <Loader2 className="size-8 animate-spin text-primary" />
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh" }}>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+      <Loader2 size={32} color={S.rose} style={{ animation: "spin 1s linear infinite" }} />
     </div>
   );
 
   if (!course || !currentLesson) return null;
 
   return (
-    <div className="flex h-[calc(100vh-64px)]">
-      {/* Sidebar */}
-      <div className="hidden lg:flex w-80 border-r border-border/40 flex-col bg-card/30">
-        <div className="p-4 border-b border-border/40 space-y-2">
-          <Link href={`/courses/${courseId}`} className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
-            <ChevronLeft className="size-3.5" />
-            {course.title}
+    <div style={{ display: "flex", height: "calc(100vh - 64px)" }}>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+
+      {/* ── Sidebar ── */}
+      <div style={{
+        width: 300, flexShrink: 0,
+        borderRight: `1px solid ${S.border}`,
+        display: "flex", flexDirection: "column",
+        background: S.white,
+        overflowY: "auto",
+      }}>
+        {/* Header */}
+        <div style={{ padding: "14px 16px", borderBottom: `1px solid ${S.border}` }}>
+          <Link
+            href={`/courses/${courseId}`}
+            style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: S.muted, marginBottom: 8 }}
+          >
+            <ChevronLeft size={13} /> {course.title}
           </Link>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Progress value={progressPercent} className="h-1.5 flex-1" />
-            <span>{progressPercent}%</span>
+          {/* Progress bar */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ flex: 1, height: 6, borderRadius: 3, background: S.border, overflow: "hidden" }}>
+              <div style={{
+                height: "100%", borderRadius: 3,
+                background: `linear-gradient(90deg, ${S.rose}, ${S.roseDark})`,
+                width: `${progressPercent}%`, transition: "width 0.3s",
+              }} />
+            </div>
+            <span style={{ fontSize: 11, color: S.muted, flexShrink: 0 }}>{progressPercent}%</span>
           </div>
         </div>
-        <ScrollArea className="flex-1">
-          {course.modules.map(module => (
+
+        {/* Lesson list */}
+        <div style={{ flex: 1, overflowY: "auto" }}>
+          {course.modules.map((module) => (
             <div key={module.id}>
-              <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide bg-card/50">
+              <div style={{
+                padding: "8px 16px",
+                fontSize: 10, fontWeight: 700, color: S.muted,
+                textTransform: "uppercase", letterSpacing: "0.08em",
+                background: S.bg,
+              }}>
                 {module.title}
               </div>
-              {module.lessons.map(lesson => {
+              {module.lessons.map((lesson) => {
                 const isActive = lesson.id === lessonId;
                 const lessonProg = progress.get(lesson.id);
                 return (
-                  <Link key={lesson.id} href={`/courses/${courseId}/learn/${lesson.id}`}>
-                    <div className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors hover:bg-card/80 ${isActive ? "bg-primary/10 border-r-2 border-primary" : ""}`}>
-                      <div className="shrink-0">
-                        {lessonProg?.isCompleted ? (
-                          <CheckCircle className="size-4 text-green-500" />
-                        ) : isActive ? (
-                          <Play className="size-4 text-primary" />
-                        ) : (
-                          <Circle className="size-4 text-muted-foreground/50" />
-                        )}
+                  <Link key={lesson.id} href={`/courses/${courseId}/learn/${lesson.id}`} style={{ textDecoration: "none" }}>
+                    <div style={{
+                      display: "flex", alignItems: "center", gap: 10,
+                      padding: "11px 16px", cursor: "pointer",
+                      background: isActive ? `${S.rose}10` : "transparent",
+                      borderRight: isActive ? `3px solid ${S.rose}` : "3px solid transparent",
+                      transition: "background 0.15s",
+                    }}>
+                      <div style={{ flexShrink: 0 }}>
+                        {lessonProg?.isCompleted
+                          ? <CheckCircle size={15} color={S.green} />
+                          : isActive
+                            ? <Play size={15} color={S.rose} />
+                            : <Circle size={15} color={`${S.muted}66`} />
+                        }
                       </div>
-                      <span className={`text-sm line-clamp-2 ${isActive ? "text-primary font-medium" : ""}`}>
+                      <span style={{
+                        fontSize: 13, lineHeight: 1.4,
+                        color: isActive ? S.rose : S.ink,
+                        fontWeight: isActive ? 600 : 400,
+                        display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden",
+                      }}>
                         {lesson.title}
                       </span>
                     </div>
@@ -115,13 +161,14 @@ export default function LessonPlayerPage() {
               })}
             </div>
           ))}
-        </ScrollArea>
+        </div>
       </div>
 
-      {/* Main area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="flex-1 overflow-y-auto">
-          <div className="max-w-4xl mx-auto p-6 space-y-6">
+      {/* ── Main area ── */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+        <div style={{ flex: 1, overflowY: "auto" }}>
+          <div style={{ maxWidth: 860, margin: "0 auto", padding: "28px 24px" }}>
+
             {/* Video */}
             {currentLesson.type === "Video" && videoUrl && (
               <VideoPlayer
@@ -133,68 +180,103 @@ export default function LessonPlayerPage() {
             )}
 
             {currentLesson.type === "Video" && !videoUrl && (
-              <div className="aspect-video bg-card rounded-xl flex items-center justify-center border border-border/50">
-                <div className="text-center space-y-2">
-                  <Loader2 className="size-8 animate-spin text-primary mx-auto" />
-                  <p className="text-sm text-muted-foreground">Carregando vídeo...</p>
+              <div style={{
+                aspectRatio: "16/9", background: "#111", borderRadius: 16,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                border: `1px solid ${S.border}`,
+              }}>
+                <div style={{ textAlign: "center" }}>
+                  <Loader2 size={32} color={S.rose} style={{ animation: "spin 1s linear infinite", margin: "0 auto 10px" }} />
+                  <p style={{ fontSize: 13, color: S.muted }}>Carregando vídeo...</p>
                 </div>
               </div>
             )}
 
             {currentLesson.type === "Text" && (
-              <div className="rounded-xl border border-border/50 p-6 bg-card">
-                <div className="flex items-center gap-2 mb-4">
-                  <FileText className="size-5 text-primary" />
-                  <span className="font-medium">Conteúdo da aula</span>
+              <div style={{
+                borderRadius: 16, border: `1px solid ${S.border}`,
+                padding: 28, background: S.white,
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+                  <FileText size={18} color={S.rose} />
+                  <span style={{ fontSize: 16, fontWeight: 700, color: S.ink }}>Conteúdo da aula</span>
                 </div>
-                <div className="prose prose-invert max-w-none">
-                  <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                    {currentLesson.textContent}
-                  </p>
-                </div>
+                <p style={{ fontSize: 15, color: S.muted, lineHeight: 1.8, whiteSpace: "pre-wrap", margin: 0 }}>
+                  {currentLesson.textContent}
+                </p>
               </div>
             )}
 
             {/* Lesson info */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Badge variant="secondary">{currentModule?.title}</Badge>
+            <div style={{ marginTop: 24 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                <span style={{ fontSize: 12, fontWeight: 700, padding: "3px 10px", borderRadius: 100, background: S.bg, color: S.muted, border: `1px solid ${S.border}` }}>
+                  {currentModule?.title}
+                </span>
                 {progress.get(lessonId)?.isCompleted && (
-                  <Badge className="bg-green-500/20 text-green-500 border-green-500/30">Concluída</Badge>
+                  <span style={{ fontSize: 12, fontWeight: 700, padding: "3px 10px", borderRadius: 100, background: `${S.green}15`, color: S.green, border: `1px solid ${S.green}33` }}>
+                    ✓ Concluída
+                  </span>
                 )}
               </div>
-              <h1 className="text-2xl font-bold">{currentLesson.title}</h1>
+              <h1 style={{ fontSize: 22, fontWeight: 800, color: S.ink, margin: "0 0 8px", letterSpacing: "-0.02em" }}>
+                {currentLesson.title}
+              </h1>
               {currentLesson.description && (
-                <p className="text-muted-foreground">{currentLesson.description}</p>
+                <p style={{ fontSize: 14, color: S.muted, margin: 0 }}>{currentLesson.description}</p>
               )}
             </div>
 
             {/* Navigation */}
-            <div className="flex items-center justify-between gap-4 pt-4 border-t border-border/40">
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              gap: 12, marginTop: 28, paddingTop: 24, borderTop: `1px solid ${S.border}`,
+            }}>
               {prevLesson ? (
-                <Link href={`/courses/${courseId}/learn/${prevLesson.id}`}>
-                  <Button variant="outline" className="gap-2">
-                    <ChevronLeft className="size-4" />
-                    Anterior
-                  </Button>
+                <Link href={`/courses/${courseId}/learn/${prevLesson.id}`} style={{ textDecoration: "none" }}>
+                  <button style={{
+                    display: "inline-flex", alignItems: "center", gap: 6,
+                    padding: "10px 18px", borderRadius: 10,
+                    border: `1.5px solid ${S.border}`, background: S.white,
+                    color: S.ink, fontSize: 14, fontWeight: 600,
+                    cursor: "pointer", fontFamily: "inherit",
+                  }}>
+                    <ChevronLeft size={16} /> Anterior
+                  </button>
                 </Link>
               ) : <div />}
 
               {!progress.get(lessonId)?.isCompleted && currentLesson.type === "Text" && (
-                <Button onClick={handleLessonComplete} className="gap-2">
-                  <CheckCircle className="size-4" />
-                  Marcar como concluída
-                </Button>
+                <button
+                  onClick={handleLessonComplete}
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: 6,
+                    padding: "10px 20px", borderRadius: 10, border: "none",
+                    background: `linear-gradient(135deg, ${S.rose}, ${S.roseDark})`,
+                    color: S.white, fontSize: 14, fontWeight: 700,
+                    cursor: "pointer", fontFamily: "inherit",
+                    boxShadow: `0 4px 14px ${S.rose}30`,
+                  }}
+                >
+                  <CheckCircle size={16} /> Marcar como concluída
+                </button>
               )}
 
-              {nextLesson && (
-                <Link href={`/courses/${courseId}/learn/${nextLesson.id}`}>
-                  <Button className="gap-2">
-                    Próxima
-                    <ChevronRight className="size-4" />
-                  </Button>
+              {nextLesson ? (
+                <Link href={`/courses/${courseId}/learn/${nextLesson.id}`} style={{ textDecoration: "none" }}>
+                  <button style={{
+                    display: "inline-flex", alignItems: "center", gap: 6,
+                    padding: "10px 18px", borderRadius: 10, border: "none",
+                    background: `linear-gradient(135deg, ${S.rose}, ${S.roseDark})`,
+                    color: S.white, fontSize: 14, fontWeight: 700,
+                    cursor: "pointer", fontFamily: "inherit",
+                    boxShadow: `0 4px 14px ${S.rose}30`,
+                  }}
+                  >
+                    Próxima <ChevronRight size={16} />
+                  </button>
                 </Link>
-              )}
+              ) : <div />}
             </div>
           </div>
         </div>

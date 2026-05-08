@@ -32,6 +32,9 @@ export const coursesApi = {
   updateSaleSettings: (id: string, data: { isForSale: boolean; price?: number; currency?: string }) =>
     api.patch<Course>(`/api/courses/${id}/sale-settings`, data).then((r) => r.data),
 
+  enrollFree: (id: string) =>
+    api.post(`/api/courses/${id}/enroll-free`).then((r) => r.data),
+
   delete: (id: string) =>
     api.delete(`/api/courses/${id}`),
 

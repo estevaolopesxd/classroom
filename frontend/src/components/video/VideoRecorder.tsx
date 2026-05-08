@@ -2,7 +2,6 @@
 
 import { useRef, useState, useEffect, useCallback } from "react";
 import { videosApi } from "@/lib/api/videos";
-import { Progress } from "@/components/ui/progress";
 import {
   Video, Square, Upload, CheckCircle, Loader2,
   Camera, Monitor, PictureInPicture2, Mic, MicOff,
@@ -146,6 +145,11 @@ export function VideoRecorder({ onVideoReady }: VideoRecorderProps) {
         recordStream = stream;
 
       } else if (mode === "screen") {
+        // Screen capture requires HTTPS
+        if (typeof navigator.mediaDevices.getDisplayMedia !== "function") {
+          toast.error("Gravação de tela requer HTTPS. Configure SSL no servidor ou acesse via localhost.", { duration: 10000 });
+          return;
+        }
         // Screen only + mic
         displayStream = await navigator.mediaDevices.getDisplayMedia({
           video: { frameRate: 30 },
@@ -167,6 +171,11 @@ export function VideoRecorder({ onVideoReady }: VideoRecorderProps) {
         }
 
       } else {
+        // PiP mode: screen capture requires HTTPS
+        if (typeof navigator.mediaDevices.getDisplayMedia !== "function") {
+          toast.error("Gravação de tela requer HTTPS. Configure SSL no servidor ou acesse via localhost.", { duration: 10000 });
+          return;
+        }
         // PiP: Screen + Camera composite via canvas
         displayStream = await navigator.mediaDevices.getDisplayMedia({
           video: { frameRate: 30 },
@@ -228,9 +237,14 @@ export function VideoRecorder({ onVideoReady }: VideoRecorderProps) {
       displayStream?.getVideoTracks()[0]?.addEventListener("ended", stopRecording);
 
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "";
-      if (!msg.includes("Permission denied") && !msg.includes("cancelled")) {
-        toast.error("Não foi possível iniciar a gravação");
+      const msg = err instanceof Error ? err.message : String(err);
+      const lmsg = msg.toLowerCase();
+      if (lmsg.includes("secure") || lmsg.includes("https") || lmsg.includes("not a function")) {
+        toast.error("Gravação de tela requer HTTPS. Configure SSL no servidor.", { duration: 10000 });
+      } else if (lmsg.includes("permission denied") || lmsg.includes("notallowed") || lmsg.includes("abort") || lmsg.includes("cancel")) {
+        // User cancelled the screen picker — do nothing
+      } else {
+        toast.error("Não foi possível iniciar a gravação: " + msg);
       }
     }
   };
@@ -549,7 +563,9 @@ export function VideoRecorder({ onVideoReady }: VideoRecorderProps) {
               <span style={{ fontSize: 13, color: C.muted, fontWeight: 500 }}>Enviando gravação...</span>
               <span style={{ fontSize: 13, fontWeight: 700, color: C.rose }}>{progress}%</span>
             </div>
-            <Progress value={progress} className="h-2" />
+            <div style={{ height: 8, borderRadius: 4, background: C.border, overflow: "hidden" }}>
+              <div style={{ height: "100%", borderRadius: 4, background: `linear-gradient(90deg, ${C.rose}, #e8729a)`, width: `${progress}%`, transition: "width 0.3s ease" }} />
+            </div>
           </div>
         )}
 
