@@ -34,3 +34,5 @@ public record VideoDto(
     long? SizeBytes,
     DateTime CreatedAt
 );
+
+public record TrimVideoRequest(double StartSeconds, double EndSeconds, string? Title = null);

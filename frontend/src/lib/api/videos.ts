@@ -28,6 +28,10 @@ export const videosApi = {
   getStatus: (id: string) =>
     api.get<Video>(`/api/videos/${id}/status`).then((r) => r.data),
 
+  /** Cria um novo vídeo cortando [startSeconds, endSeconds] do original. */
+  trimVideo: (id: string, startSeconds: number, endSeconds: number, title?: string) =>
+    api.post<Video>(`/api/videos/${id}/trim`, { startSeconds, endSeconds, title }).then((r) => r.data),
+
   delete: (id: string) =>
     api.delete(`/api/videos/${id}`),
 };

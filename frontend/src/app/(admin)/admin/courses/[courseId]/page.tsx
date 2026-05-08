@@ -6,9 +6,11 @@ import { coursesApi } from "@/lib/api/courses";
 import type { CourseDetail, Lesson } from "@/types";
 import { VideoUploader } from "@/components/video/VideoUploader";
 import { VideoRecorder } from "@/components/video/VideoRecorder";
+import { VideoEditorModal } from "@/components/video/VideoEditorModal";
+import { VideoTutorial } from "@/components/video/VideoTutorial";
 import {
   ArrowLeft, Plus, Trash2, GripVertical, ChevronDown, ChevronRight,
-  Loader2, Eye, EyeOff, BookOpen, Video, FileText, Save, DollarSign,
+  Loader2, Eye, EyeOff, BookOpen, Video, FileText, Save, DollarSign, Play,
 } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -221,9 +223,12 @@ export default function CourseEditorPage() {
   const [lessonForm, setLessonForm] = useState({ title: "", type: "Video", isFreePreview: false, textContent: "" });
   const [lessonLoading, setLessonLoading] = useState(false);
 
-  // Video modal
+  // Video modal (adicionar/trocar vídeo)
   const [videoModal, setVideoModal] = useState<{ open: boolean; lesson: Lesson | null }>({ open: false, lesson: null });
   const [videoTab, setVideoTab] = useState<"upload" | "record">("upload");
+
+  // Editor modal (visualizar + editar vídeo já vinculado)
+  const [editorModal, setEditorModal] = useState<{ open: boolean; videoId: string; lessonTitle: string } | null>(null);
 
   /* ── Data loading ─────────────────────────────────────────── */
   const load = useCallback(async () => {
@@ -505,27 +510,52 @@ export default function CourseEditorPage() {
                             }}>Grátis</span>
                           )}
                         </div>
-                        {lesson.type === "Video" && (
-                          <p style={{ fontSize: 11, color: S.muted, margin: "2px 0 0" }}>
-                            {lesson.videoId ? "✓ Vídeo vinculado" : "Sem vídeo"}
-                          </p>
-                        )}
+                        {lesson.type === "Video" && (() => {
+                          const vs = lesson.videoStatus;
+                          if (!lesson.videoId) return <p style={{ fontSize: 11, color: S.muted, margin: "2px 0 0" }}>Sem vídeo</p>;
+                          if (vs?.status === "Ready") return (
+                            <p style={{ fontSize: 11, color: S.green, margin: "2px 0 0", display: "flex", alignItems: "center", gap: 4 }}>
+                              ✓ Pronto {vs.durationSeconds ? `(${Math.floor(vs.durationSeconds / 60)}:${String(vs.durationSeconds % 60).padStart(2, "0")})` : ""}
+                            </p>
+                          );
+                          if (vs?.status === "Processing") return <p style={{ fontSize: 11, color: S.yellow, margin: "2px 0 0" }}>⏳ Processando...</p>;
+                          if (vs?.status === "Failed") return <p style={{ fontSize: 11, color: S.rose, margin: "2px 0 0" }}>❌ Falhou — envie novamente</p>;
+                          return <p style={{ fontSize: 11, color: S.muted, margin: "2px 0 0" }}>⏳ Aguardando...</p>;
+                        })()}
                       </div>
 
                       <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
                         {lesson.type === "Video" && (
-                          <button
-                            onClick={() => setVideoModal({ open: true, lesson })}
-                            style={{
-                              display: "inline-flex", alignItems: "center", gap: 5,
-                              padding: "5px 10px", borderRadius: 8, border: `1px solid ${S.border}`,
-                              background: S.white, color: S.ink, fontSize: 12, fontWeight: 600,
-                              cursor: "pointer", fontFamily: "inherit",
-                            }}
-                          >
-                            <Video size={12} />
-                            {lesson.videoId ? "Trocar" : "Adicionar vídeo"}
-                          </button>
+                          <>
+                            {/* Botão Ver/Editar — aparece só quando o vídeo está pronto */}
+                            {lesson.videoId && lesson.videoStatus?.status === "Ready" && (
+                              <button
+                                onClick={() => setEditorModal({ open: true, videoId: lesson.videoId!, lessonTitle: lesson.title })}
+                                style={{
+                                  display: "inline-flex", alignItems: "center", gap: 5,
+                                  padding: "5px 10px", borderRadius: 8,
+                                  border: `1px solid ${S.rose}44`,
+                                  background: `${S.rose}08`,
+                                  color: S.rose, fontSize: 12, fontWeight: 700,
+                                  cursor: "pointer", fontFamily: "inherit",
+                                }}
+                              >
+                                <Play size={11} fill={S.rose} /> Ver / Editar
+                              </button>
+                            )}
+                            <button
+                              onClick={() => setVideoModal({ open: true, lesson })}
+                              style={{
+                                display: "inline-flex", alignItems: "center", gap: 5,
+                                padding: "5px 10px", borderRadius: 8, border: `1px solid ${S.border}`,
+                                background: S.white, color: S.ink, fontSize: 12, fontWeight: 600,
+                                cursor: "pointer", fontFamily: "inherit",
+                              }}
+                            >
+                              <Video size={12} />
+                              {lesson.videoId ? "Trocar" : "Adicionar vídeo"}
+                            </button>
+                          </>
                         )}
                         <BtnIcon onClick={() => deleteLesson(mod.id, lesson.id)} danger title="Excluir aula">
                           <Trash2 size={13} color={S.rose} />
@@ -741,7 +771,7 @@ export default function CourseEditorPage() {
         </div>
       </Modal>
 
-      {/* ══ VIDEO MODAL ══ */}
+      {/* ══ VIDEO MODAL (adicionar/trocar) ══ */}
       <Modal
         open={videoModal.open}
         onClose={() => setVideoModal({ open: false, lesson: null })}
@@ -768,7 +798,24 @@ export default function CourseEditorPage() {
 
         {videoTab === "upload" && <VideoUploader onVideoReady={handleVideoReady} />}
         {videoTab === "record" && <VideoRecorder onVideoReady={handleVideoReady} />}
+
+        {/* Tutorial contextual */}
+        <VideoTutorial defaultOpen={videoTab === "upload" ? "upload" : "camera"} />
       </Modal>
+
+      {/* ══ EDITOR MODAL (visualizar + editar vídeo pronto) ══ */}
+      {editorModal?.open && (
+        <VideoEditorModal
+          videoId={editorModal.videoId}
+          lessonTitle={editorModal.lessonTitle}
+          onClose={() => setEditorModal(null)}
+          onTrimReady={(newId) => {
+            toast.success("Vídeo cortado criado! Agora você pode vinculá-lo a uma aula.");
+            setEditorModal(null);
+            load(); // recarrega o curso para mostrar o novo vídeo
+          }}
+        />
+      )}
     </div>
   );
 }

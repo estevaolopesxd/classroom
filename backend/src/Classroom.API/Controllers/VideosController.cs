@@ -106,6 +106,40 @@ public class VideosController(AppDbContext db, MinIOStorageService storage, Vide
         return NoContent();
     }
 
+    /// <summary>
+    /// Cria um novo vídeo cortando o intervalo [startSeconds, endSeconds] do vídeo original.
+    /// Retorna o novo VideoDto (status = Processing) — monitore via GET /status.
+    /// </summary>
+    [HttpPost("{id:guid}/trim")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<VideoDto>> TrimVideo(Guid id, [FromBody] TrimVideoRequest request)
+    {
+        var original = await db.Videos.FindAsync(id);
+        if (original is null) return NotFound();
+        if (original.Status != Domain.Enums.VideoStatus.Ready)
+            return BadRequest(new { message = "O vídeo precisa estar pronto antes de editar." });
+        if (request.StartSeconds < 0 || request.EndSeconds <= request.StartSeconds)
+            return BadRequest(new { message = "Intervalo de corte inválido." });
+
+        // Cria registro para o vídeo cortado (reutiliza o OriginalKey do pai)
+        var trimmedTitle = request.Title ?? original.Title + " (cortado)";
+        var trimmed = new Domain.Entities.Video
+        {
+            Title = trimmedTitle,
+            MimeType = original.MimeType ?? "video/mp4",
+            SizeBytes = 0,
+            OriginalKey = original.OriginalKey,   // mesmo arquivo fonte
+            UploadedById = CurrentUserId,
+            Status = Domain.Enums.VideoStatus.Processing,
+        };
+
+        db.Videos.Add(trimmed);
+        await db.SaveChangesAsync();
+
+        videoProcessor.EnqueueTrim(trimmed.Id, request.StartSeconds, request.EndSeconds);
+        return Ok(MapDto(trimmed));
+    }
+
     [HttpGet("{id:guid}/play-url")]
     public async Task<ActionResult<object>> GetPlayUrl(Guid id)
     {
