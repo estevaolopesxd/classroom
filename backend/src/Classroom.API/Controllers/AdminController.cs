@@ -48,45 +48,178 @@ public class AdminController(AppDbContext db) : ControllerBase
     public async Task<IActionResult> GetCourseAnalytics(Guid courseId)
     {
         var course = await db.Courses
-            .Include(c => c.Modules).ThenInclude(m => m.Lessons)
+            .Include(c => c.Modules.OrderBy(m => m.Order))
+                .ThenInclude(m => m.Lessons.OrderBy(l => l.Order))
             .FirstOrDefaultAsync(c => c.Id == courseId);
 
         if (course is null) return NotFound();
 
+        var allLessons = course.Modules
+            .SelectMany(m => m.Lessons.Select(l => new { l.Id, l.Title, ModuleTitle = m.Title, l.Order, ModuleOrder = m.Order }))
+            .OrderBy(x => x.ModuleOrder).ThenBy(x => x.Order)
+            .ToList();
+        var allLessonIds = allLessons.Select(l => l.Id).ToList();
+        var totalLessons = allLessonIds.Count;
+
+        // ── Enrollments ────────────────────────────────────────────────────
         var enrollments = await db.CourseEnrollments
             .Where(e => e.CourseId == courseId)
             .Include(e => e.User)
             .ToListAsync();
 
-        var allLessonIds = course.Modules.SelectMany(m => m.Lessons).Select(l => l.Id).ToList();
+        var totalEnrolled = enrollments.Count;
+
+        // ── Progress per enrolled user ──────────────────────────────────────
         var allProgresses = await db.LessonProgresses
             .Where(lp => allLessonIds.Contains(lp.LessonId))
-            .GroupBy(lp => lp.UserId)
-            .ToDictionaryAsync(g => g.Key, g => g.ToList());
+            .ToListAsync();
 
-        var userProgress = enrollments.Select(e =>
+        var progressByUser = allProgresses
+            .GroupBy(lp => lp.UserId)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        int notStarted = 0, inProgress = 0, completed = 0;
+        foreach (var e in enrollments)
         {
-            allProgresses.TryGetValue(e.UserId, out var progresses);
-            var completed = progresses?.Count(p => p.IsCompleted) ?? 0;
+            progressByUser.TryGetValue(e.UserId, out var ups);
+            var done = ups?.Count(p => p.IsCompleted) ?? 0;
+            if (done == 0) notStarted++;
+            else if (totalLessons > 0 && done >= totalLessons) completed++;
+            else inProgress++;
+        }
+
+        var completionRate = totalEnrolled > 0
+            ? Math.Round((double)completed / totalEnrolled * 100, 1)
+            : 0.0;
+
+        var avgProgress = totalEnrolled > 0 && totalLessons > 0
+            ? Math.Round(
+                enrollments.Average(e =>
+                {
+                    progressByUser.TryGetValue(e.UserId, out var ups);
+                    return (double)(ups?.Count(p => p.IsCompleted) ?? 0) / totalLessons * 100;
+                }), 1)
+            : 0.0;
+
+        // ── Revenue & purchase funnel ───────────────────────────────────────
+        var purchases = await db.Purchases
+            .Where(p => p.CourseId == courseId)
+            .ToListAsync();
+
+        var abandonThreshold = DateTime.UtcNow.AddHours(-1);
+        var completedPurchases = purchases.Count(p => p.Status == PurchaseStatus.Completed);
+        var pendingAbandoned   = purchases.Count(p => p.Status == PurchaseStatus.Pending && p.CreatedAt < abandonThreshold);
+        var refundedCount      = purchases.Count(p => p.Status == PurchaseStatus.Refunded);
+        var totalRevenue       = purchases
+            .Where(p => p.Status == PurchaseStatus.Completed)
+            .Sum(p => p.Amount);
+        var activeSubscriptions = enrollments.Count(e => e.SubscriptionStatus == SubscriptionStatus.Active);
+
+        // Conversion: started checkout → completed
+        var checkoutConvRate = (completedPurchases + pendingAbandoned) > 0
+            ? Math.Round((double)completedPurchases / (completedPurchases + pendingAbandoned) * 100, 1)
+            : 0.0;
+
+        // ── Enrollment source split ─────────────────────────────────────────
+        var bySource = new
+        {
+            purchase = enrollments.Count(e => e.Source == EnrollmentSource.Purchase),
+            free     = enrollments.Count(e => e.Source == EnrollmentSource.Free),
+            admin    = enrollments.Count(e => e.Source == EnrollmentSource.Admin)
+        };
+
+        // ── Per-lesson completion ───────────────────────────────────────────
+        var lessonCompletionByLesson = allProgresses
+            .Where(lp => lp.IsCompleted)
+            .GroupBy(lp => lp.LessonId)
+            .ToDictionary(g => g.Key, g => g.Count());
+
+        var perLesson = allLessons.Select(l => new
+        {
+            lessonId        = l.Id,
+            title           = l.Title,
+            moduleTitle     = l.ModuleTitle,
+            completedCount  = lessonCompletionByLesson.TryGetValue(l.Id, out var cnt) ? cnt : 0,
+            completionRate  = totalEnrolled > 0
+                ? Math.Round((double)(lessonCompletionByLesson.TryGetValue(l.Id, out var cnt2) ? cnt2 : 0) / totalEnrolled * 100, 1)
+                : 0.0
+        }).ToList();
+
+        // ── Enrollments over last 30 days ───────────────────────────────────
+        var thirtyDaysAgo = DateTime.UtcNow.Date.AddDays(-29);
+        var enrollmentsByDay = enrollments
+            .Where(e => e.EnrolledAt >= thirtyDaysAgo)
+            .GroupBy(e => e.EnrolledAt.Date)
+            .Select(g => new { date = g.Key.ToString("yyyy-MM-dd"), count = g.Count() })
+            .OrderBy(x => x.date)
+            .ToList();
+
+        // ── Student list ────────────────────────────────────────────────────
+        var lastActivityByUser = allProgresses
+            .GroupBy(lp => lp.UserId)
+            .ToDictionary(g => g.Key, g => g.Max(p => p.LastWatchedAt));
+
+        var students = enrollments.Select(e =>
+        {
+            progressByUser.TryGetValue(e.UserId, out var ups);
+            var done = ups?.Count(p => p.IsCompleted) ?? 0;
+            lastActivityByUser.TryGetValue(e.UserId, out var lastActivity);
             return new
             {
-                userId = e.UserId,
-                userName = e.User.FullName,
-                userEmail = e.User.Email,
-                enrolledAt = e.EnrolledAt,
-                completedLessons = completed,
-                totalLessons = allLessonIds.Count,
-                percentComplete = allLessonIds.Count > 0
-                    ? Math.Round((double)completed / allLessonIds.Count * 100, 1) : 0
+                userId           = e.UserId,
+                name             = e.User.FullName,
+                email            = e.User.Email,
+                source           = e.Source.ToString(),
+                subscriptionStatus = e.SubscriptionStatus.ToString(),
+                enrolledAt       = e.EnrolledAt,
+                lastActivity,
+                completedLessons = done,
+                totalLessons,
+                progressPercent  = totalLessons > 0
+                    ? Math.Round((double)done / totalLessons * 100, 1)
+                    : 0.0
             };
-        });
+        })
+        .OrderByDescending(s => s.progressPercent)
+        .ToList();
 
         return Ok(new
         {
             courseId,
-            courseTitle = course.Title,
-            totalEnrollments = enrollments.Count,
-            userProgress
+            courseTitle        = course.Title,
+            thumbnailUrl       = course.ThumbnailUrl,
+            isForSale          = course.IsForSale,
+            price              = course.Price,
+            currency           = course.Currency,
+            pricingType        = course.PricingType.ToString(),
+
+            // Overview
+            totalEnrolled,
+            notStarted,
+            inProgress,
+            completed,
+            completionRate,
+            avgProgress,
+
+            // Revenue
+            totalRevenue,
+            completedPurchases,
+            pendingAbandoned,
+            refundedCount,
+            activeSubscriptions,
+            checkoutConvRate,
+
+            // Split
+            bySource,
+
+            // Per-lesson
+            perLesson,
+
+            // Timeline
+            enrollmentsByDay,
+
+            // Students
+            students
         });
     }
 }
